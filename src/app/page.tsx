@@ -1,12 +1,12 @@
 import React from "react";
-import { auth } from "@/auth";
+import { auth } from "@/utils/auth";
 
-import RestaurantCard from "@/components/homePage/restaurantCard";
+import RestaurantCard from "@/components/cards/RestaurantCard";
 
-import FooterSection from "@/components/homePage/footerSection";
-import HeaderSection from "@/components/homePage/headerSection";
+import FooterSection from "@/layouts/homePage/sections/FooterSection";
+import HeaderSection from "@/layouts/homePage/sections/HeaderSection";
 
-import client from "@/lib/db";
+import client from "@/utils/db";
 
 interface returnedRestaurant {
 	_id: string;
@@ -30,7 +30,7 @@ export default async function MainPage() {
 				{/* Scrollable content area */}
 				<div className="flex-1 overflow-y-auto px-6 py-10 pb-40">
 					<div className="max-w-5xl mx-auto text-center">
-						<HeaderSection user={session?.user!} registerOpen={registerOpen} />
+						<HeaderSection user={session?.user} registerOpen={registerOpen} />
 
 						<p className="text-lg text-gray mb-10 font-semibold">Please select a restaurant you would like to order pickup from.</p>
 

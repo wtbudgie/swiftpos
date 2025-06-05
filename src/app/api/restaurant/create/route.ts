@@ -1,6 +1,8 @@
-import { auth } from "@/auth";
-import client from "@/lib/db";
 import { NextRequest } from "next/server";
+
+import client from "@/utils/db";
+import { auth } from "@/utils/auth";
+
 import { Restaurant } from "@/types/RestaurantType";
 
 export async function GET(req: NextRequest) {

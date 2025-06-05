@@ -1,12 +1,9 @@
-import { User } from "@/types/UserType";
-import { auth } from "@/auth";
-import client from "@/lib/db";
 import { NextRequest } from "next/server";
 
-type ResponseData = {
-	message: string;
-	user: User | null;
-};
+import client from "@/utils/db";
+import { auth } from "@/utils/auth";
+
+import { User } from "@/types/UserType";
 
 export async function PUT(req: NextRequest) {
 	const session = await auth();
@@ -24,6 +21,7 @@ export async function PUT(req: NextRequest) {
 	try {
 		body = await req.json();
 	} catch (error) {
+		console.error(error);
 		return new Response(JSON.stringify({ message: "Invalid JSON body.", user: null }), {
 			status: 400,
 			headers: { "Content-Type": "application/json" },

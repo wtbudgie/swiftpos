@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import client from "@/lib/db";
 import { ObjectId } from "mongodb";
-import { auth } from "@/auth";
+import { v4 } from "uuid";
+
+import client from "@/utils/db";
+import { auth } from "@/utils/auth";
+
 import { Item, ModificationGroup, ModificationOption, Restaurant } from "@/types/RestaurantType";
 import { ActiveOrder, OrderStatus } from "@/types/OrderType";
-import { v4 } from "uuid";
 
 export async function POST(req: NextRequest) {
 	try {

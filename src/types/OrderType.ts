@@ -1,4 +1,4 @@
-import { ModificationGroup, ModificationOption } from "./RestaurantType";
+import { ModificationOption } from "./RestaurantType";
 
 export enum OrderStatus {
 	Pending = "pending",

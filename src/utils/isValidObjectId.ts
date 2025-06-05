@@ -1,4 +1,4 @@
-export function isValidObjectId(input: any) {
+export function isValidObjectId(input: unknown): boolean {
 	if (typeof input === "string") {
 		return /^[a-fA-F0-9]{24}$/.test(input);
 	}

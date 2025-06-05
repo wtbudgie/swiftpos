@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
-import { Category, Item } from "@/types/RestaurantType";
-import client from "@/lib/db";
 import { ObjectId } from "mongodb";
-import PageSection from "@/components/restaurantPage/page";
+
+import client from "@/utils/db";
+import { auth } from "@/utils/auth";
+
+import { Category, Item } from "@/types/RestaurantType";
+
+import PageSection from "@/layouts/restaurantPage/RestaurantLayout";
 
 export interface returnedRestaurant {
 	_id: string;
@@ -15,7 +18,9 @@ export interface returnedRestaurant {
 	dietaries: string[];
 }
 
-export default async function RestaurantPage({ params }: { params: { restaurantId: string } }) {
+type Params = Promise<{ restaurantId: string }>;
+
+export default async function RestaurantPage({ params }: { params: Params }) {
 	const session = await auth();
 	const { restaurantId } = await params;
 	const restaurantData = await getRestaurantData(restaurantId);

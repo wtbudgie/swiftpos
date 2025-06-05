@@ -8,8 +8,7 @@ declare module "next-auth" {
 		emailVerified: string | null;
 		firstName: string;
 		secondName: string;
-		postcode: string | null;
-		state: string;
+		phoneNumber: string;
 		onboarded: boolean;
 		ownerOf: string[];
 		employeeOf: string[];

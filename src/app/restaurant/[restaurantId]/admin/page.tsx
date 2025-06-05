@@ -1,11 +1,14 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
-import { Category, Item, Restaurant } from "@/types/RestaurantType";
-import client from "@/lib/db";
 import { ObjectId } from "mongodb";
-import PageSection from "@/components/adminPage/page";
 
-export interface returnedRestaurant {
+import client from "@/utils/db";
+import { auth } from "@/utils/auth";
+
+import { Restaurant } from "@/types/RestaurantType";
+
+import PageSection from "@/layouts/adminPage/AdminLayout";
+
+export interface ReturnedRestaurant {
 	_id: string;
 	ownerId: string;
 }
@@ -14,10 +17,12 @@ export type SanitizedRestaurant = Omit<Restaurant, "_id"> & {
 	_id: string;
 };
 
-export default async function RestaurantPage({ params }: { params: { restaurantId: string } }) {
-	const session = await auth();
+type Params = Promise<{ restaurantId: string }>;
 
+export default async function RestaurantPage({ params }: { params: Params }) {
+	const session = await auth();
 	const { restaurantId } = await params;
+
 	const ownerId = (await getRestaurantData(restaurantId))?.ownerId;
 
 	if (!session) redirect(`/restaurant/${restaurantId}`);
@@ -33,7 +38,7 @@ export default async function RestaurantPage({ params }: { params: { restaurantI
 	);
 }
 
-const getRestaurantData = async (restaurantId: string): Promise<returnedRestaurant | null> => {
+const getRestaurantData = async (restaurantId: string): Promise<ReturnedRestaurant | null> => {
 	const db = client.db("SwiftPOS");
 	const collection = db.collection("restaurants");
 
@@ -50,7 +55,7 @@ const getRestaurantData = async (restaurantId: string): Promise<returnedRestaura
 
 		if (!restaurant) return null;
 
-		const parsedRestaurant: returnedRestaurant = {
+		const parsedRestaurant: ReturnedRestaurant = {
 			_id: restaurant._id.toString(),
 			ownerId: restaurant.ownerId,
 		};
