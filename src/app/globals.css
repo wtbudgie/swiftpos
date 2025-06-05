@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+.zain-light {
+	font-family: "Zain", sans-serif;
+	font-weight: 300;
+	font-style: normal;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.zain-regular {
+	font-family: "Zain", sans-serif;
+	font-weight: 400;
+	font-style: normal;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.zain-black {
+	font-family: "Zain", sans-serif;
+	font-weight: 900;
+	font-style: normal;
+}
+
+.zain-light-italic {
+	font-family: "Zain", sans-serif;
+	font-weight: 300;
+	font-style: italic;
+}
+
+.zain-regular-italic {
+	font-family: "Zain", sans-serif;
+	font-weight: 400;
+	font-style: italic;
+}
+
+@theme {
+	--font-zain: "Zain", sans-serif;
+
+	--color-black: #162521;
+	--color-white: #c0e0de;
+	--color-gray: #3c474b;
+	--color-steel-blue: #4f7cac;
+	--color-ice-blue: #9eefe5;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+	background: var(--color-black);
+	font-family: var(--font-zain);
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.animate-fadeIn {
+	animation: fadeIn 0.5s ease forwards;
 }
