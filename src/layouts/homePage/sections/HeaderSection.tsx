@@ -10,7 +10,7 @@ import RegisterModal from "@/components/modals/RegisterModal";
 import OrderHistoryModal from "@/components/modals/OrderHistoryModal";
 
 type HeaderSectionProps = {
-	user: User | undefined;
+	user: User | null;
 	registerOpen: boolean;
 };
 

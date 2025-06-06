@@ -1,9 +1,9 @@
 "use client";
 import CategoryButton from "@/components/buttons/CategoryButton";
-import { returnedRestaurant } from "@/app/restaurant/[restaurantId]/page";
+import { ReturnedRestaurant } from "@/app/restaurant/[restaurantId]/page";
 
 type SidebarSectionProps = {
-	restaurantData: returnedRestaurant;
+	restaurantData: ReturnedRestaurant;
 	onCategoryClick: (categoryId: string) => void;
 };
 

@@ -12,7 +12,7 @@ import RegisterModal from "@/components/modals/RegisterModal";
 import SearchBar from "@/components/inputs/SearchBar";
 
 type HeaderSectionProps = {
-	user: User;
+	user: User | null;
 	registerOpen: boolean;
 };
 
@@ -24,13 +24,15 @@ export default function HeaderSection({ user, registerOpen }: HeaderSectionProps
 
 	return (
 		<div className="bg-transparent p-6 rounded-md">
-			<RegisterModal
-				isOpen={isRegisterOpen}
-				onClose={() => {
-					setRegisterOpen(false);
-				}}
-				userData={user}
-			/>
+			{user && (
+				<RegisterModal
+					isOpen={isRegisterOpen}
+					onClose={() => {
+						setRegisterOpen(false);
+					}}
+					userData={user}
+				/>
+			)}
 			<LoginModal
 				isOpen={isLoginOpen}
 				onClose={() => {
@@ -38,22 +40,27 @@ export default function HeaderSection({ user, registerOpen }: HeaderSectionProps
 				}}
 				allowLoginBypass={true}
 			/>
-			<AccountSettingsModal
-				isOpen={isSettingsOpen}
-				onClose={() => {
-					console.log("Closing Account Settings Modal");
-					setSettingsOpen(false);
-				}}
-				userData={user}
-			/>
-			<OrderHistoryModal
-				isOpen={isOrderHistoryOpen}
-				onClose={() => {
-					console.log("Closing Account Settings Modal");
-					setOrderHistoryOpen(false);
-				}}
-				userData={user}
-			/>
+			{user && (
+				<AccountSettingsModal
+					isOpen={isSettingsOpen}
+					onClose={() => {
+						console.log("Closing Account Settings Modal");
+						setSettingsOpen(false);
+					}}
+					userData={user}
+				/>
+			)}
+
+			{user && (
+				<OrderHistoryModal
+					isOpen={isOrderHistoryOpen}
+					onClose={() => {
+						console.log("Closing Account Settings Modal");
+						setOrderHistoryOpen(false);
+					}}
+					userData={user}
+				/>
+			)}
 
 			<div className="flex items-center gap-2">
 				{/* Buttons all on the left */}

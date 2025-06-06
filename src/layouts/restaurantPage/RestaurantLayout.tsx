@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { Session } from "next-auth";
 import Link from "next/link";
 
-import { returnedRestaurant } from "@/app/restaurant/[restaurantId]/page";
+import { ReturnedRestaurant } from "@/app/restaurant/[restaurantId]/page";
 import SidebarSection from "@/layouts/restaurantPage/sections/SidebarSection";
 import HeaderSection from "@/layouts/restaurantPage/sections/HeaderSection";
 
@@ -16,8 +16,8 @@ import { Item, ModificationGroup, ModificationOption } from "@/types/RestaurantT
 import { OrderedItem } from "@/types/OrderType";
 
 type RestaurantLayoutProps = {
-	restaurantData: returnedRestaurant;
-	session: Session;
+	restaurantData: ReturnedRestaurant;
+	session: Session | null;
 };
 
 export default function RestaurantLayout({ restaurantData, session }: RestaurantLayoutProps) {
@@ -312,7 +312,7 @@ export default function RestaurantLayout({ restaurantData, session }: Restaurant
 				{/* Main Content */}
 				<div className="col-start-2 flex flex-col gap-6 px-6 max-w-[1300px] mx-auto w-full">
 					{/* Header section */}
-					<HeaderSection registerOpen={!session?.user.onboarded} user={session?.user} />
+					<HeaderSection registerOpen={!session?.user.onboarded} user={session?.user ?? null} />
 
 					{/* Item Layout */}
 					<div
