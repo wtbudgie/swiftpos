@@ -6,7 +6,7 @@ import { auth } from "@/utils/auth";
 
 import { Restaurant } from "@/types/RestaurantType";
 
-import PageSection from "@/layouts/adminPage/AdminLayout";
+import AdminLayout from "@/layouts/adminPage/AdminLayout";
 
 export interface ReturnedRestaurant {
 	_id: string;
@@ -33,7 +33,7 @@ export default async function RestaurantPage({ params }: { params: Params }) {
 
 	return (
 		<>
-			<PageSection restaurantData={fullRestaurantData} session={session!} />
+			<AdminLayout restaurantData={fullRestaurantData} session={session!} />
 		</>
 	);
 }
