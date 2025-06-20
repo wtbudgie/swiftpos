@@ -10,15 +10,18 @@ import OrderHistoryModal from "@/components/modals/OrderHistoryModal";
 import RegisterModal from "@/components/modals/RegisterModal";
 
 import SearchBar from "@/components/inputs/SearchBar";
+import { OrderedItem } from "@/types/OrderType";
 
 type HeaderSectionProps = {
 	user: User | null;
 	registerOpen: boolean;
+	searchQuery: string;
+	setSearchQuery: (value: string) => void;
 };
 
-export default function HeaderSection({ user, registerOpen }: HeaderSectionProps) {
+export default function HeaderSection({ user, registerOpen, searchQuery, setSearchQuery }: HeaderSectionProps) {
 	const [isRegisterOpen, setRegisterOpen] = useState(registerOpen);
-	const [isLoginOpen, setLoginOpen] = useState(false);
+	const [isLoginOpen, setLoginOpen] = useState(!user);
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
 	const [isOrderHistoryOpen, setOrderHistoryOpen] = useState(false);
 
@@ -44,7 +47,6 @@ export default function HeaderSection({ user, registerOpen }: HeaderSectionProps
 				<AccountSettingsModal
 					isOpen={isSettingsOpen}
 					onClose={() => {
-						console.log("Closing Account Settings Modal");
 						setSettingsOpen(false);
 					}}
 					userData={user}
@@ -55,7 +57,6 @@ export default function HeaderSection({ user, registerOpen }: HeaderSectionProps
 				<OrderHistoryModal
 					isOpen={isOrderHistoryOpen}
 					onClose={() => {
-						console.log("Closing Account Settings Modal");
 						setOrderHistoryOpen(false);
 					}}
 					userData={user}
@@ -76,13 +77,10 @@ export default function HeaderSection({ user, registerOpen }: HeaderSectionProps
 					type="button">
 					<History />
 				</button>
-				<button className="h-10 w-10 flex items-center justify-center rounded-md hover:bg-gray-300 text-black transition">
-					<SlidersHorizontal />
-				</button>
 
 				{/* Search bar fills remaining space */}
 				<div className="flex-1 ml-4">
-					<SearchBar />
+					<SearchBar value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
 				</div>
 			</div>
 		</div>

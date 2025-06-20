@@ -1,8 +1,9 @@
 /**
- * File: createDefaultRestaurant.ts
- * Description: Server-side API route to create a default restaurant entry in the SwiftPOS database.
- *              This function validates session access and ownership before inserting a pre-defined restaurant object.
+ * File: createRestaurant.ts
+ * Description: API route handler to create a default restaurant for an owner in SwiftPOS.
+ *              Includes admin authorization, validation of input, and inserting default restaurant data.
  * Author: William Anderson
+ * Created: 2025-06-19
  */
 
 import { NextRequest } from "next/server";
@@ -10,25 +11,30 @@ import client from "@/utils/db";
 import { auth } from "@/utils/auth";
 import { Restaurant } from "@/types/RestaurantType";
 
-// --- Configuration ---
 const DEFAULT_IMAGE = "https://www.svgrepo.com/show/508699/landscape-placeholder.svg";
 const ADMIN_EMAILS = ["maniakwill@gmail.com"];
 
 /**
- * Determines if the user sending the request is a admin.
- *
- * @param {any} session - The active session.
- * @returns {boolean} - True/false if the user is an admin.
+ * Function: isUserAdmin
+ * Input:
+ * - session: any — authenticated user session object
+ * Output:
+ * - boolean — true if session user email is in admin list, false otherwise
+ * Description:
+ * Checks if the authenticated user is an admin by comparing email against ADMIN_EMAILS.
  */
 function isUserAdmin(session: any): boolean {
 	return !!session?.user?.email && ADMIN_EMAILS.includes(session.user.email);
 }
 
 /**
- * Validates the ownerId parameter from the URL query.
- *
- * @param {NextRequest} req - The incoming request object.
- * @returns {string | null} - Validated ownerId
+ * Function: getValidOwnerId
+ * Input:
+ * - req: NextRequest — incoming HTTP request object
+ * Output:
+ * - string | null — returns valid ownerId string from query params or null if invalid
+ * Description:
+ * Extracts and validates the ownerId parameter from the request URL query string.
  */
 function getValidOwnerId(req: NextRequest): string | null {
 	const url = new URL(req.url);
@@ -40,11 +46,15 @@ function getValidOwnerId(req: NextRequest): string | null {
 }
 
 /**
- * Creates a new default Restaurant object.
- *
- * @param {string} ownerId - The ownerId of the restaurant
- * @param {string} timestamp - The timestamp of creating the restaurant.
- * @returns {Restaurant} Default restaurant object.
+ * Function: createDefaultRestaurant
+ * Input:
+ * - ownerId: string — owner user ID to associate with new restaurant
+ * - timestamp: number — current timestamp used to generate unique IDs for nested objects
+ * Output:
+ * - Restaurant — returns a Restaurant object populated with default values and IDs
+ * Description:
+ * Constructs a default restaurant structure with placeholders for categories, items, modifications, and dietaries.
+ * This ensures a newly created restaurant has a valid initial schema.
  */
 function createDefaultRestaurant(ownerId: string, timestamp: number): Restaurant {
 	const defaultItemId = `itm-${timestamp}`;
@@ -99,10 +109,17 @@ function createDefaultRestaurant(ownerId: string, timestamp: number): Restaurant
 }
 
 /**
- * Handles a GET request to create a default restaurant entry for a specified owner.
- *
- * @param {NextRequest} req - The incoming request object.
- * @returns {Promise<Response>} JSON response indicating success or failure.
+ * Function: GET
+ * Input:
+ * - req: NextRequest — incoming HTTP GET request
+ * Output:
+ * - Promise<Response> — HTTP response containing creation result or error message
+ * Description:
+ * Handles the API endpoint to create a new restaurant.
+ * - Verifies admin authorization
+ * - Validates the ownerId query parameter
+ * - Inserts a new default restaurant record into the database
+ * - Returns the new restaurant ID and access URL on success
  */
 export async function GET(req: NextRequest): Promise<Response> {
 	const session = await auth();
@@ -140,3 +157,16 @@ export async function GET(req: NextRequest): Promise<Response> {
 		{ status: 201, headers: { "Content-Type": "application/json" } }
 	);
 }
+
+/**
+ * Testing Notes:
+ * - Verify admin session required for access (401 Unauthorized or 403 Forbidden responses).
+ * - Test valid and invalid ownerId query parameters.
+ * - Confirm default restaurant document is inserted with correct structure.
+ * - Validate response includes restaurantId, ownerId, ownerEmail, and access URL.
+ *
+ * Future Enhancements:
+ * - Add detailed validation on restaurant fields before insertion.
+ * - Support custom restaurant data from client input.
+ * - Implement logging for failed insert operations.
+ */

@@ -59,3 +59,9 @@ body {
 .animate-fadeIn {
 	animation: fadeIn 0.5s ease forwards;
 }
+
+html,
+body,
+#__next {
+	height: 100%;
+}

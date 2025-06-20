@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 
 import { User } from "next-auth";
+import { logout } from "@/utils/authController";
+import { useRouter } from "next/navigation";
 
 type RegisterModalProps = {
 	isOpen: boolean;
@@ -16,6 +18,8 @@ export default function RegisterModal({ isOpen, onClose, userData }: RegisterMod
 	const [phoneNumber, setPhoneNumber] = useState("");
 	const [showWarning, setShowWarning] = useState(false);
 
+	const router = useRouter();
+
 	const handleBackdropClick = () => {
 		setShowWarning(true);
 		setTimeout(() => setShowWarning(false), 5000);
@@ -23,6 +27,11 @@ export default function RegisterModal({ isOpen, onClose, userData }: RegisterMod
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+
+		if (!isPhoneValid) {
+			setShowWarning(true);
+			return;
+		}
 
 		try {
 			const response = await fetch("/api/user", {
@@ -54,6 +63,9 @@ export default function RegisterModal({ isOpen, onClose, userData }: RegisterMod
 		}
 	};
 
+	const phoneRegex = /^614\d{8}$/;
+	const isPhoneValid = phoneRegex.test(phoneNumber);
+
 	return (
 		<div
 			className={`fixed inset-0 z-[999] grid h-screen w-screen place-items-center
@@ -70,7 +82,19 @@ export default function RegisterModal({ isOpen, onClose, userData }: RegisterMod
 						<label htmlFor="email" className="block font-semibold text-left text-black">
 							Email
 						</label>
-						<p className="text-xs text-gray-700 text-left mb-1">Your email address</p>
+						<p className="text-xs text-gray-700 text-left mb-1">
+							Your email address (If this is incorrect,{" "}
+							<button
+								type="button"
+								onClick={() => {
+									logout();
+									router.refresh();
+								}}
+								className="text-blue-600 hover:underline underline-offset-2 p-0 m-0 bg-transparent border-none">
+								click here
+							</button>
+							.)
+						</p>
 						<input
 							id="email"
 							type="email"
@@ -84,7 +108,7 @@ export default function RegisterModal({ isOpen, onClose, userData }: RegisterMod
 						<label htmlFor="email" className="block font-semibold text-left text-black">
 							Phone Number
 						</label>
-						<p className="text-xs text-gray-700 text-left mb-1">Your best contact phone number. (e.g 61-0400000000)</p>
+						<p className="text-xs text-gray-700 text-left mb-1">Your best contact phone number. (Format: 614XXXXXXXX)</p>
 						<input
 							id="phone"
 							type="text"
@@ -92,6 +116,7 @@ export default function RegisterModal({ isOpen, onClose, userData }: RegisterMod
 							onChange={(e) => setPhoneNumber(e.target.value)}
 							className="w-full rounded border border-gray-300 px-3 py-2 bg-gray-100 text-black"
 						/>
+						{phoneNumber && !isPhoneValid && <p className="text-red-600 text-xs mt-1">Phone must be in format 614XXXXXXXX.</p>}
 					</div>
 
 					<div className="flex gap-4">
@@ -108,6 +133,7 @@ export default function RegisterModal({ isOpen, onClose, userData }: RegisterMod
 								className="w-full rounded border border-gray-300 px-3 py-2 bg-gray-100 text-black"
 								title="First name."
 								required
+								maxLength={10}
 							/>
 						</div>
 						<div className="flex-1">
@@ -123,6 +149,7 @@ export default function RegisterModal({ isOpen, onClose, userData }: RegisterMod
 								className="w-full rounded border border-gray-300 px-3 py-2 bg-gray-100 text-black"
 								title="Surname."
 								required
+								maxLength={10}
 							/>
 						</div>
 					</div>

@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 
 import { User } from "next-auth";
+import { useRouter } from "next/navigation";
+import { logout } from "@/utils/authController";
 
 type AccountSettingsModalProps = {
 	isOpen: boolean;
@@ -15,6 +17,8 @@ export default function AccountSettingsModal({ isOpen, onClose, userData }: Acco
 	const [secondName, setSecondName] = useState(userData?.secondName ?? "");
 	const [phoneNumber, setPhoneNumber] = useState(userData?.phoneNumber ?? "");
 	const [showWarning, setShowWarning] = useState(false);
+
+	const router = useRouter();
 
 	if (!userData) return null;
 
@@ -104,6 +108,7 @@ export default function AccountSettingsModal({ isOpen, onClose, userData }: Acco
 								className="w-full rounded border border-gray-300 px-3 py-2 bg-gray-100 text-black"
 								title="First name."
 								required
+								maxLength={10}
 							/>
 						</div>
 						<div className="flex-1">
@@ -119,12 +124,23 @@ export default function AccountSettingsModal({ isOpen, onClose, userData }: Acco
 								className="w-full rounded border border-gray-300 px-3 py-2 bg-gray-100 text-black"
 								title="Surname."
 								required
+								maxLength={10}
 							/>
 						</div>
 					</div>
 
 					<button type="submit" className="bg-(--color-steel-blue) text-white py-2 rounded hover:bg-blue-700 transition">
 						Save Details
+					</button>
+
+					<button
+						type="button"
+						onClick={() => {
+							logout();
+							router.refresh();
+						}}
+						className="bg-red-600 text-white py-2 rounded hover:bg-red-700 transition">
+						Log Out
 					</button>
 
 					{showWarning && <p className="text-red-600 font-semibold mt-2">Please finish registering to continue.</p>}

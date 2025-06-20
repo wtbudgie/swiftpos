@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Add useEffect import
 
 import { User } from "next-auth";
 import { History, UserCircle } from "lucide-react";
@@ -8,6 +8,7 @@ import AccountSettingsModal from "@/components/modals/AccountSettingsModal";
 import LoginModal from "@/components/modals/LoginModal";
 import RegisterModal from "@/components/modals/RegisterModal";
 import OrderHistoryModal from "@/components/modals/OrderHistoryModal";
+import { useSearchParams } from "next/navigation";
 
 type HeaderSectionProps = {
 	user: User | null;
@@ -15,10 +16,19 @@ type HeaderSectionProps = {
 };
 
 export default function HeaderSection({ user, registerOpen }: HeaderSectionProps) {
+	const params = useSearchParams();
+	const sessionId = params.get("session_id");
+
 	const [isRegisterOpen, setRegisterOpen] = useState(registerOpen);
 	const [isLoginOpen, setLoginOpen] = useState(false);
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
 	const [isOrderHistoryOpen, setOrderHistoryOpen] = useState(false);
+
+	useEffect(() => {
+		if (sessionId) {
+			setOrderHistoryOpen(true);
+		}
+	}, [sessionId]); // Only run when sessionId changes
 
 	return (
 		<div className="flex justify-between items-center mb-6">
@@ -37,7 +47,6 @@ export default function HeaderSection({ user, registerOpen }: HeaderSectionProps
 				<AccountSettingsModal
 					isOpen={isSettingsOpen}
 					onClose={() => {
-						console.log("Closing Account Settings Modal");
 						setSettingsOpen(false);
 					}}
 					userData={user}
@@ -47,7 +56,6 @@ export default function HeaderSection({ user, registerOpen }: HeaderSectionProps
 				<OrderHistoryModal
 					isOpen={isOrderHistoryOpen}
 					onClose={() => {
-						console.log("Closing Account Settings Modal");
 						setOrderHistoryOpen(false);
 					}}
 					userData={user}

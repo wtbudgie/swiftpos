@@ -1,29 +1,47 @@
 "use client";
 
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import { ActiveOrder, OrderStatus } from "@/types/OrderType";
 import { SanitizedRestaurant } from "@/app/restaurant/[restaurantId]/admin/page";
+import { Order, useActiveOrders } from "@/components/SocketComponent";
 
 type ActiveOrdersListPageProps = {
 	restaurantData: SanitizedRestaurant;
 };
 
 export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersListPageProps) {
-	const [orders, setOrders] = useState<ActiveOrder[]>(restaurantData.activeOrders || []);
+	const restaurantId = restaurantData._id;
+	const [orders, setOrder] = useActiveOrders(() => `ws://${window.location.host}/api/restaurant/${restaurantId}/orders`);
 	const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+
+	const allActiveOrders = orders.flatMap((o) => o.orders);
+
+	const [pendingOrders, setPendingOrders] = useState<ActiveOrder[]>(allActiveOrders.filter((order) => order.status === OrderStatus.Pending));
+	const [preparingOrders, setPreparingOrders] = useState<ActiveOrder[]>(allActiveOrders.filter((order) => order.status === OrderStatus.Preparing));
+	const [readyOrders, setReadyOrders] = useState<ActiveOrder[]>(allActiveOrders.filter((order) => order.status === OrderStatus.Ready));
 
 	const handleToggleExpand = (orderId: string) => {
 		setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
 	};
 
-	const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-		setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)));
-		// TODO: Send update to backend
+	const updateOrderStatus = (order: ActiveOrder, orderStatus: OrderStatus) => {
+		const updatedOrder: ActiveOrder = { ...order, status: orderStatus };
+		setOrder((prevOrders) => {
+			const restaurantOrders = prevOrders.find((o) => o.restaurantId === restaurantId)?.orders || [];
+			const mergedOrders = [...new Map([...restaurantOrders.filter((o) => o.id !== updatedOrder.id), updatedOrder].map((o) => [o.id, o])).values()];
+
+			return {
+				restaurantId,
+				orders: mergedOrders,
+			};
+		});
 	};
 
-	const pendingOrders = orders.filter((order) => order.status === OrderStatus.Pending);
-	const preparingOrders = orders.filter((order) => order.status === OrderStatus.Preparing);
+	useEffect(() => {
+		setPendingOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Pending));
+		setPreparingOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Preparing));
+		setReadyOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Ready));
+	}, [orders]);
 
 	const renderOrderCard = (order: ActiveOrder) => {
 		const isExpanded = expandedOrderId === order.id;
@@ -40,15 +58,22 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 					{order.status === OrderStatus.Pending && (
 						<button
 							className="px-4 py-2 bg-yellow-400 text-black rounded hover:opacity-80 transition"
-							onClick={() => updateOrderStatus(order.id, OrderStatus.Preparing)}>
+							onClick={() => updateOrderStatus(order, OrderStatus.Preparing)}>
 							Mark Preparing
 						</button>
 					)}
 					{order.status === OrderStatus.Preparing && (
 						<button
 							className="px-4 py-2 bg-green-500 text-white rounded hover:opacity-80 transition"
-							onClick={() => updateOrderStatus(order.id, OrderStatus.Ready)}>
+							onClick={() => updateOrderStatus(order, OrderStatus.Ready)}>
 							Mark Ready
+						</button>
+					)}
+					{order.status === OrderStatus.Ready && (
+						<button
+							className="px-4 py-2 bg-green-500 text-white rounded hover:opacity-80 transition"
+							onClick={() => updateOrderStatus(order, OrderStatus.Completed)}>
+							Mark Completed
 						</button>
 					)}
 				</div>
@@ -94,6 +119,12 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 				<section>
 					<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">🍳 Preparing Orders</h2>
 					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{preparingOrders.map(renderOrderCard)}</div>
+				</section>
+			)}
+			{readyOrders.length > 0 && (
+				<section>
+					<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">🍳 Ready Orders</h2>
+					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{readyOrders.map(renderOrderCard)}</div>
 				</section>
 			)}
 

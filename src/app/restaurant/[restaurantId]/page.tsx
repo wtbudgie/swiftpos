@@ -50,7 +50,11 @@ export default async function RestaurantPage({ params }: { params: Params }) {
 	if (!restaurantData) redirect("/");
 
 	// Render restaurant layout, pass session for personalization if available
-	return <RestaurantLayout restaurantData={restaurantData} session={session ?? null} />;
+	return (
+		<div className="h-full">
+			<RestaurantLayout restaurantData={restaurantData} session={session ?? null} />
+		</div>
+	);
 }
 
 /**

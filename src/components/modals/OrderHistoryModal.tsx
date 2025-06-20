@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-
-import { User } from "next-auth";
+import { User } from "@/types/UserType";
+import OrderCard from "../cards/OrderCard";
+import { OrderStatus } from "@/types/OrderType";
 
 type OrderHistoryModalProps = {
 	isOpen: boolean;
@@ -10,23 +11,51 @@ type OrderHistoryModalProps = {
 	userData: User;
 };
 
-export default function OrderHistoryModal({ isOpen, onClose }: OrderHistoryModalProps) {
+export default function OrderHistoryModal({ isOpen, onClose, userData }: OrderHistoryModalProps) {
+	const pendingOrders = userData.pastOrders.filter((order) => order.status === OrderStatus.Pending);
+	const completedOrders = userData.pastOrders.filter((order) => order.status !== OrderStatus.Pending);
+
 	return (
 		<div
-			className={`fixed inset-0 z-[999] grid h-screen w-screen place-items-center
-            bg-black/60
-            backdrop-blur-sm
-            transition-opacity duration-300
-            ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
-			<div className="relative m-4 p-4 w-3/4 rounded-lg bg-white shadow-sm">
-				<div className="text-xl font-medium text-slate-800 pb-4">It&apos;s a simple modal.</div>
-				<div className="border-t border-slate-200 py-4 text-slate-600 font-light">The key to more success is to have a lot of pillows. Fan luv.</div>
-				<div className="flex justify-end pt-4">
+			className={`fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+				isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+			}`}>
+			<div className="relative w-1/2 max-w-6xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 shadow-md mx-4">
+				<h2 className="text-2xl font-semibold text-slate-800 mb-6">Your Orders</h2>
+
+				{pendingOrders.length === 0 && completedOrders.length === 0 ? (
+					<p className="text-slate-500 text-center">No orders</p>
+				) : (
+					<>
+						{pendingOrders.length > 0 && (
+							<>
+								<h3 className="text-lg font-medium text-slate-700 mb-2">Active Orders</h3>
+								{pendingOrders.map((order) => (
+									<React.Fragment key={order.id}>
+										<OrderCard orderData={order} />
+										<br />
+									</React.Fragment>
+								))}
+							</>
+						)}
+
+						{completedOrders.length > 0 && (
+							<>
+								<h3 className="text-lg font-medium text-slate-700 mt-6 mb-2">Past Orders</h3>
+								{completedOrders.map((order) => (
+									<React.Fragment key={order.id}>
+										<OrderCard orderData={order} />
+										<br />
+									</React.Fragment>
+								))}
+							</>
+						)}
+					</>
+				)}
+
+				<div className="flex justify-end mt-6">
 					<button onClick={onClose} className="rounded-md border py-2 px-4 text-sm text-slate-600 hover:bg-slate-100">
-						Cancel
-					</button>
-					<button onClick={onClose} className="ml-2 rounded-md bg-green-600 py-2 px-4 text-sm text-white hover:bg-green-700">
-						Confirm
+						Close
 					</button>
 				</div>
 			</div>

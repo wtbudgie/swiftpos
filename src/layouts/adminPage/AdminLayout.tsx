@@ -12,6 +12,8 @@ import HeaderSection from "./sections/HeaderSection";
 import SidebarSection from "./sections/SidebarSection";
 
 import { SanitizedRestaurant } from "@/app/restaurant/[restaurantId]/admin/page";
+import SalesStatsPage from "./pages/SalesStats";
+import PastOrdersListPage from "./pages/PastOrders";
 
 type AdminLayoutProps = {
 	restaurantData: SanitizedRestaurant;
@@ -19,7 +21,7 @@ type AdminLayoutProps = {
 };
 
 export default function AdminLayout({ restaurantData, session }: AdminLayoutProps) {
-	const [activeSection, setActiveSection] = useState<string>("menuSettings");
+	const [activeSection, setActiveSection] = useState<string>("activeOrders");
 
 	return (
 		<>
@@ -43,9 +45,12 @@ export default function AdminLayout({ restaurantData, session }: AdminLayoutProp
 				{/* Main Content */}
 				<div className="col-start-2 flex flex-col gap-0 px-6 pb-10 max-w-[1300px] mx-auto w-full">
 					{/* Header section */}
-					<HeaderSection registerOpen={!session?.user.onboarded} user={session?.user} />
-					{activeSection === "menuSettings" && <EditMenuSection restaurantData={restaurantData} />}
+					<HeaderSection registerOpen={!session?.user.onboarded} user={session?.user} searchDisabled={activeSection !== "menuSettings"} />
 					{activeSection === "activeOrders" && <ActiveOrdersList restaurantData={restaurantData} />}
+					{activeSection === "pastOrders" && <PastOrdersListPage restaurantData={restaurantData} />}
+					{activeSection === "menuSettings" && <EditMenuSection restaurantData={restaurantData} />}
+
+					{activeSection === "salesStatistics" && <SalesStatsPage />}
 				</div>
 			</div>
 

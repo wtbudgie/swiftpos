@@ -4,6 +4,7 @@ export enum OrderStatus {
 	Pending = "pending",
 	Preparing = "preparing",
 	Ready = "ready",
+	Completed = "completed",
 }
 
 export type ActiveOrder = {
@@ -16,6 +17,7 @@ export type ActiveOrder = {
 	discountPrice: number;
 	actualPrice: number;
 	notes?: string;
+	paymentIntentId: string;
 };
 
 export type OrderedItem = {
@@ -42,5 +44,4 @@ export type UserOrderReceipt = {
 	discountPrice: number;
 	actualPrice: number;
 	status: OrderStatus;
-	receiptUrl?: string;
 };

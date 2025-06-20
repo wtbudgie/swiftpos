@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-
 import { Pen, Trash, Check, X } from "lucide-react";
 
 import { SanitizedRestaurant } from "@/app/restaurant/[restaurantId]/admin/page";
@@ -16,35 +15,28 @@ type EditMenuPageProps = {
 };
 
 export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
+	// Data States
 	const [items, setItems] = useState<Array<Item>>(restaurantData.items);
 	const [categories, setCategories] = useState<Array<Category>>(restaurantData.categories);
+
+	// Snapshot for change detection
+	const [originalItems, setOriginalItems] = useState(JSON.stringify(restaurantData.items));
+	const [originalCategories, setOriginalCategories] = useState(JSON.stringify(restaurantData.categories));
+
+	// UI States
 	const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
-
-	const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
-	const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-
-	const [selectedItem, setSelectedItem] = useState<Item>(items[0]);
+	const [selectedItem, setSelectedItem] = useState<Item>(restaurantData.items[0]);
 	const [isModalOpen, setIsModalOpen] = useState(false);
-
+	const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+	const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
 	const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
 	const [tempCategoryName, setTempCategoryName] = useState<string>("");
 
-	const handleRenameCategory = (categoryId: string, newName: string) => {
-		setCategories((prev) => prev.map((cat) => (cat.id === categoryId ? { ...cat, name: newName } : cat)));
-		setEditingCategoryId(null);
-	};
-
-	const openItemModal = (item: Item) => {
-		setSelectedItem(item);
-		setIsModalOpen(true);
-	};
-
-	const closeItemModal = () => {
-		setIsModalOpen(false);
-	};
-
 	const defaultImage = "https://www.svgrepo.com/show/508699/landscape-placeholder.svg";
-	const handleAddItem = async (categoryId: string) => {
+
+	// ---- Item & Category Handlers ----
+
+	const handleAddItem = (categoryId: string) => {
 		const newItem: Item = {
 			id: `itm-${Date.now()}`,
 			name: "New Item",
@@ -58,23 +50,31 @@ export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
 			modifications: [],
 			stockAmount: 0,
 		};
-
-		setItems((prevItems) => [...prevItems, newItem]);
+		setItems((prev) => [...prev, newItem]);
 	};
 
-	const handleAddCategory = async () => {
+	const handleAddCategory = () => {
 		const newCategory: Category = {
 			id: `cat-${Date.now()}`,
 			name: "New Category",
 			itemIds: [],
 			description: "",
 		};
+		setCategories((prev) => [...prev, newCategory]);
+	};
 
-		setCategories((prevCategories) => [...prevCategories, newCategory]);
+	const handleRenameCategory = (categoryId: string, newName: string) => {
+		setCategories((prev) => prev.map((cat) => (cat.id === categoryId ? { ...cat, name: newName } : cat)));
+		setEditingCategoryId(null);
+	};
+
+	const handleDeleteItem = (itemId: string) => {
+		setItems((prev) => prev.filter((item) => item.id !== itemId));
+		setIsModalOpen(false);
 	};
 
 	const handleItemSave = (updatedItem: Item) => {
-		setItems((prevItems) => prevItems.map((item) => (item.id === updatedItem.id ? updatedItem : item)));
+		setItems((prev) => prev.map((item) => (item.id === updatedItem.id ? updatedItem : item)));
 		setIsModalOpen(false);
 	};
 
@@ -90,34 +90,35 @@ export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
 
 	const confirmDeleteCategory = () => {
 		if (!categoryToDelete) return;
-
 		setCategories((prev) => prev.filter((cat) => cat.id !== categoryToDelete.id));
 		setItems((prev) => prev.filter((item) => item.categoryId !== categoryToDelete.id));
-
 		setIsConfirmModalOpen(false);
 		setCategoryToDelete(null);
 	};
 
-	const handleDeleteItem = (itemId: string) => {
-		setItems((prev) => prev.filter((item) => item.id !== itemId));
-		setIsModalOpen(false);
+	// ---- Item Modal ----
+
+	const openItemModal = (item: Item) => {
+		setSelectedItem(item);
+		setIsModalOpen(true);
 	};
+
+	const closeItemModal = () => setIsModalOpen(false);
+
+	// ---- Autosave Logic ----
 
 	const handleSaveRestaurant = useCallback(async () => {
 		try {
 			setSaveStatus("saving");
 
-			const res = await fetch("/api/restaurant/save", {
+			const res = await fetch(`/api/restaurant/${restaurantData._id}/config/save`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					restaurantId: restaurantData._id,
-					items,
-					categories,
-				}),
+				body: JSON.stringify({ restaurantId: restaurantData._id, items, categories }),
 			});
 
 			if (!res.ok) throw new Error("Failed to save");
+
 			const data = await res.json();
 			if (data.success) {
 				setSaveStatus("saved");
@@ -131,12 +132,21 @@ export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
 
 	useEffect(() => {
 		if (saveStatus === "saving") return;
+
+		const itemsChanged = JSON.stringify(items) !== originalItems;
+		const categoriesChanged = JSON.stringify(categories) !== originalCategories;
+		if (!itemsChanged && !categoriesChanged) return;
+
 		const timer = setTimeout(() => {
 			handleSaveRestaurant();
+			setOriginalItems(JSON.stringify(items));
+			setOriginalCategories(JSON.stringify(categories));
 		}, 500);
 
 		return () => clearTimeout(timer);
-	}, [categories, items, handleSaveRestaurant, saveStatus]);
+	}, [items, categories, saveStatus, handleSaveRestaurant]);
+
+	// ---- UI ----
 
 	return (
 		<div className="w-full h-full">
@@ -145,6 +155,7 @@ export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
 					{saveStatus === "saving" ? "Saving..." : "Saved!"}
 				</div>
 			)}
+
 			<ConfirmModal
 				isOpen={isConfirmModalOpen}
 				title="Delete Category"
@@ -152,6 +163,7 @@ export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
 				onCancel={() => setIsConfirmModalOpen(false)}
 				onConfirm={confirmDeleteCategory}
 			/>
+
 			<ItemModal
 				isOpen={isModalOpen}
 				onClose={closeItemModal}
@@ -159,20 +171,15 @@ export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
 				onSave={handleItemSave}
 				onDelete={handleDeleteItem}
 				restaurantDietaries={restaurantData.dietaries}
+				restaurantId={restaurantData._id}
 			/>
 
 			<div
 				className="overflow-y-auto max-h-[calc(100vh-220px)] space-y-8 px-2
-                                {/* scroll bar */}
-                                [&::-webkit-scrollbar]:w-2
-                                [&::-webkit-scrollbar-track]:rounded-full
-                                [&::-webkit-scrollbar-track]:bg-gray-100
-                                [&::-webkit-scrollbar-thumb]:rounded-full
-                                [&::-webkit-scrollbar-thumb]:bg-gray-300
-                                dark:[&::-webkit-scrollbar-track]:bg-neutral-700
-                                dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
-				{/* Filter through all categories that the restaurant has (e.g entrees, drinks, etc) */}
-
+				[&::-webkit-scrollbar]:w-2
+				[&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100
+				[&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300
+				dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
 				{categories.map((category) => {
 					const categoryItems = items.filter((item) => item.categoryId === category.id && item.isActive);
 
@@ -228,6 +235,7 @@ export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
 									</button>
 								</div>
 							</div>
+
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 								{categoryItems.map((item) => (
 									<ItemCard key={item.id} item={item} onClick={openItemModal} buttonLabel="Edit Item" />
@@ -236,10 +244,11 @@ export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
 						</div>
 					);
 				})}
+
 				<div className="flex justify-center">
 					<button
-						className="mt-2 self-start bg-(--color-steel-blue) hover:bg-(--color-ice-blue) text-white hover:text-(--color-black) hover:outline px-4 py-2 rounded-md text-sm transition cursor-pointer w-[50%] "
-						onClick={() => handleAddCategory()}>
+						onClick={handleAddCategory}
+						className="mt-2 self-start bg-(--color-steel-blue) hover:bg-(--color-ice-blue) text-white hover:text-(--color-black) hover:outline px-4 py-2 rounded-md text-sm transition cursor-pointer w-[50%]">
 						Create New Category
 					</button>
 				</div>

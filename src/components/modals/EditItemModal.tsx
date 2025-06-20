@@ -12,9 +12,11 @@ type EditItemModalProps = {
 	onSave: (updatedItem: Item) => void;
 	onDelete: (itemId: string) => void;
 	restaurantDietaries: string[];
+	restaurantId: string;
 };
 
-export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete, restaurantDietaries }: EditItemModalProps) {
+export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete, restaurantDietaries, restaurantId }: EditItemModalProps) {
+	const timestamp = Date.now();
 	const [formState, setFormState] = useState<Item>(item);
 	const [imagePreview, setImagePreview] = useState<string | null>(item.imageUrl || null);
 
@@ -57,7 +59,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 	const addIngredient = () => {
 		setFormState((prev) => ({
 			...prev,
-			ingredients: [...prev.ingredients, { id: crypto.randomUUID(), name: "", quantity: "" }],
+			ingredients: [...prev.ingredients, { id: `ing-${timestamp}`, name: "", quantity: "" }],
 		}));
 	};
 
@@ -77,7 +79,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 
 	const addModificationGroup = () => {
 		const newGroup: ModificationGroup = {
-			id: crypto.randomUUID(),
+			id: `modgrp-${timestamp}`,
 			name: "",
 			options: [],
 			required: false,
@@ -105,7 +107,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 		const group = formState.modifications?.[groupIndex];
 		if (!group) return;
 		const newOption: ModificationOption = {
-			id: crypto.randomUUID(),
+			id: `mod-${timestamp}`,
 			name: "",
 			priceModifier: 0,
 		};
@@ -157,7 +159,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 							const file = e.target.files?.[0];
 							if (file) {
 								try {
-									const url = await uploadImage(file);
+									const url = await uploadImage(file, restaurantId);
 									setFormState((prev) => ({ ...prev, imageUrl: url }));
 									setImagePreview(url);
 								} catch (err) {
@@ -350,11 +352,11 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 	);
 }
 
-async function uploadImage(file: File): Promise<string> {
+async function uploadImage(file: File, restaurantId: string): Promise<string> {
 	const formData = new FormData();
 	formData.append("file", file);
 
-	const res = await fetch("/api/restaurant/upload", {
+	const res = await fetch(`/api/restaurant/${restaurantId}/upload`, {
 		method: "POST",
 		body: formData,
 	});

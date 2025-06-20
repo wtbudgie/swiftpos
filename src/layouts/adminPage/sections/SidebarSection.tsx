@@ -13,25 +13,33 @@ export type Category = {
 	disabled?: boolean;
 };
 
+export enum pages {
+	"activeOrders" = "activeOrders",
+	"pastOrders" = "pastOrders",
+	"menuSettings" = "menuSettings",
+	"storeSettings" = "storeSettings",
+	"salesStatistics" = "salesStatistics",
+}
+
 const categories: Category[] = [
 	{
-		id: "activeOrders",
+		id: pages.activeOrders,
 		name: "View Active Orders",
 	},
 	{
-		id: "pastOrders",
+		id: pages.pastOrders,
 		name: "View Past Orders",
 	},
 	{
-		id: "menuSettings",
+		id: pages.menuSettings,
 		name: "Edit Menu",
 	},
 	{
-		id: "storeSettings",
+		id: pages.storeSettings,
 		name: "Edit Store",
 	},
 	{
-		id: "salesStatistics",
+		id: pages.salesStatistics,
 		name: "View Sales Statistics",
 	},
 ];

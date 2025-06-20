@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
+import { loadStripe } from "@stripe/stripe-js";
 import "./globals.css";
 
 export const metadata: Metadata = {

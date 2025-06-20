@@ -11,13 +11,15 @@ import OrderHistoryModal from "@/components/modals/OrderHistoryModal";
 import RegisterModal from "@/components/modals/RegisterModal";
 
 import SearchBar from "@/components/inputs/SearchBar";
+import { pages } from "./SidebarSection";
 
 type HeaderSectionProps = {
 	user: User;
 	registerOpen: boolean;
+	searchDisabled: boolean;
 };
 
-export default function HeaderSection({ user, registerOpen }: HeaderSectionProps) {
+export default function HeaderSection({ user, registerOpen, searchDisabled }: HeaderSectionProps) {
 	const [isRegisterOpen, setRegisterOpen] = useState(registerOpen);
 	const [isLoginOpen, setLoginOpen] = useState(false);
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
@@ -74,7 +76,7 @@ export default function HeaderSection({ user, registerOpen }: HeaderSectionProps
 
 				{/* Search bar fills remaining space */}
 				<div className="flex-1 ml-4">
-					<SearchBar />
+					<SearchBar onChange={() => {}} value="" disabled={searchDisabled} />
 				</div>
 			</div>
 		</div>

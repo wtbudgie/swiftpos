@@ -2,7 +2,7 @@
  * File: MainPage.tsx
  * Description: Server-side React component that renders the main landing page with a list of restaurants.
  *              Fetches session and restaurant data from the database and displays restaurant cards.
- * Author: [Your Name]
+ * Author: William Anderson
  */
 
 import React from "react";
@@ -84,8 +84,7 @@ export default async function MainPage() {
 /**
  * Fetches the list of restaurants from MongoDB database.
  *
- * @returns {Promise<ReturnedRestaurant[]>} Promise resolving to an array of restaurants.
- *                                         Returns empty array on error.
+ * @returns {Promise<ReturnedRestaurant[]>} Promise resolving to an array of restaurants and returns empty array on error.
  */
 const getRestaurantList = async (): Promise<ReturnedRestaurant[]> => {
 	const db = client.db("SwiftPOS");

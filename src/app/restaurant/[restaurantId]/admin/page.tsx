@@ -34,7 +34,7 @@ type Params = Promise<{ restaurantId: string }>;
  * Page component that loads restaurant data and renders admin interface.
  * Redirects users if not authorized or data not found.
  */
-export default async function RestaurantPage({ params }: { params: Params }) {
+export default async function AdminPage({ params }: { params: Params }) {
 	const session = await auth();
 	const { restaurantId } = await params;
 
