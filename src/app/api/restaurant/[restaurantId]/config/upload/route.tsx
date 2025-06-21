@@ -2,7 +2,6 @@
  * File: uploadImage.ts
  * Description: Handles image file uploads for SwiftPOS, saving images to the server's public directory and returning accessible URLs.
  * Author: William Anderson
- * Created: 2025-06-19
  */
 
 import path from "path";
@@ -75,9 +74,4 @@ export async function POST(req: NextRequest, { params }: { params: Params }): Pr
  * - Send multipart/form-data POST requests with and without a 'file' field to verify validation.
  * - Confirm files are saved correctly in /public/images with unique names.
  * - Check response status codes and returned JSON for success and error cases.
- *
- * Future Enhancements:
- * - Add file type and size validation to reject unsupported or oversized uploads.
- * - Implement authentication/authorization to restrict upload access.
- * - Introduce image resizing or compression before saving to optimize storage.
  */

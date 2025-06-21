@@ -1,15 +1,53 @@
-"use client";
+/**
+ * File: ConfirmModal.tsx
+ * Description: React modal component for confirmation prompts, typically for destructive actions.
+ * Author: William Anderson
+ */
 
 import React from "react";
 
 type ConfirmModalProps = {
+	/**
+	 * Input: boolean - Controls modal visibility.
+	 */
 	isOpen: boolean;
+	/**
+	 * Input: string (optional) - Title text displayed in the modal header.
+	 */
 	title?: string;
+	/**
+	 * Input: string (optional) - Message text explaining the confirmation context.
+	 */
 	message?: string;
+	/**
+	 * Input: function - Callback fired when the cancel button is clicked.
+	 */
 	onCancel: () => void;
+	/**
+	 * Input: function - Callback fired when the confirm (delete) button is clicked.
+	 */
 	onConfirm: () => void;
 };
 
+/**
+ * Component: ConfirmModal
+ * Purpose: Display a modal dialog to confirm or cancel a user action.
+ *
+ * Inputs:
+ * - isOpen: boolean controlling visibility.
+ * - title: optional string, default "Are you sure?".
+ * - message: optional string, default "This action cannot be undone.".
+ * - onCancel: callback invoked when cancel is clicked.
+ * - onConfirm: callback invoked when confirm is clicked.
+ *
+ * Output:
+ * - JSX.Element rendering a modal with cancel and confirm buttons.
+ *
+ * Description:
+ * The modal uses fixed positioning and backdrop styling for focus.
+ * It toggles visibility via opacity and pointer-events based on `isOpen`.
+ * Button styles differentiate cancel (neutral) and confirm (destructive) actions.
+ */
 export default function ConfirmModal({ isOpen, title = "Are you sure?", message = "This action cannot be undone.", onCancel, onConfirm }: ConfirmModalProps) {
 	return (
 		<div

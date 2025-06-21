@@ -1,11 +1,25 @@
-"use client";
+/**
+ * File: CheckoutModal.tsx
+ * Description: React component providing a modal checkout interface using Stripe's Embedded Checkout for SwiftPOS.
+ * Author: William Anderson
+ */
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Stripe } from "@stripe/stripe-js";
 import { Elements, EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 
 import { OrderedItem } from "@/types/OrderType";
 
+/**
+ * Type: CheckoutModalProps
+ * Description: Props expected by CheckoutModal component.
+ * Fields:
+ * - isOpen: boolean — determines if the modal is visible.
+ * - onClose: () => void — callback to close the modal.
+ * - restaurantId: string — identifier for the restaurant processing payment.
+ * - cartItems: OrderedItem[] — array of items currently in the cart.
+ * - stripePromise: Promise<Stripe | null> — promise resolving to Stripe instance.
+ */
 type CheckoutModalProps = {
 	isOpen: boolean;
 	onClose: () => void;
@@ -14,12 +28,44 @@ type CheckoutModalProps = {
 	stripePromise: Promise<Stripe | null>;
 };
 
+/**
+ * Component: CheckoutModal
+ * Input:
+ * - Props of type CheckoutModalProps.
+ *
+ * Output:
+ * - JSX.Element | null — Renders modal with Stripe embedded checkout or null if not open.
+ *
+ * Description:
+ * - Displays a modal checkout interface triggered by isOpen.
+ * - Fetches a client secret from the backend to initiate Stripe payment.
+ * - Handles payment confirmation and error states.
+ * - Uses EmbeddedCheckoutProvider and EmbeddedCheckout for the Stripe UI.
+ * - Resets internal state on modal close.
+ *
+ * Notes on Data Types:
+ * - clientSecret: string | null — stores payment intent secret from server.
+ * - error: string | null — stores error messages related to payment initiation.
+ * - confirmed: boolean — tracks whether payment succeeded.
+ * - totalPriceCents: number — sum of all cart item totalPrice (assumed to be in cents).
+ */
 export default function CheckoutModal({ isOpen, onClose, restaurantId, cartItems, stripePromise }: CheckoutModalProps) {
 	const [confirmed, setConfirmed] = useState(false);
 	const [clientSecret, setClientSecret] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
+
+	// Calculate total cart price in cents by summing totalPrice of each cart item.
 	const totalPriceCents = cartItems.reduce((acc, i) => acc + i.totalPrice, 0);
 
+	/**
+	 * Function: fetchClientSecret
+	 * Input: none (uses closure variables restaurantId and cartItems)
+	 * Output: void (side effect: updates clientSecret or error state)
+	 * Description: Calls backend API to create a payment intent and retrieve client secret for Stripe checkout.
+	 * - Sends POST request with cart items as JSON body.
+	 * - On success, sets clientSecret from response.
+	 * - On failure, sets an error message.
+	 */
 	const fetchClientSecret = useCallback(async () => {
 		try {
 			const res = await fetch(`/api/restaurant/${restaurantId}/payments`, {
@@ -36,16 +82,28 @@ export default function CheckoutModal({ isOpen, onClose, restaurantId, cartItems
 		}
 	}, [restaurantId, cartItems]);
 
+	/**
+	 * Effect: On modal open with non-empty cart, fetch client secret.
+	 * Dependencies: isOpen, fetchClientSecret
+	 */
 	useEffect(() => {
 		if (isOpen && cartItems.length > 0) {
 			fetchClientSecret();
 		}
 	}, [isOpen, fetchClientSecret]);
 
+	/**
+	 * Function: handlePaymentSuccess
+	 * Description: Marks payment as confirmed, triggering confirmation UI.
+	 */
 	const handlePaymentSuccess = () => {
 		setConfirmed(true);
 	};
 
+	/**
+	 * Function: handleClose
+	 * Description: Resets state and invokes parent close callback.
+	 */
 	const handleClose = async () => {
 		setClientSecret(null);
 		setConfirmed(false);
@@ -53,8 +111,10 @@ export default function CheckoutModal({ isOpen, onClose, restaurantId, cartItems
 		onClose();
 	};
 
+	// Render null if modal not open.
 	if (!isOpen) return null;
 
+	// Render checkout modal with Stripe Elements and embedded checkout UI.
 	return (
 		<Elements stripe={stripePromise}>
 			<div
@@ -66,9 +126,9 @@ export default function CheckoutModal({ isOpen, onClose, restaurantId, cartItems
 				<div
 					className="relative m-4 rounded-lg bg-white shadow-lg overflow-hidden"
 					style={{
-						width: "90vw", // Fixed wider width
-						height: "95vh", // Original height
-						maxWidth: "100vw", // Ensure it doesn't overflow on mobile
+						width: "90vw",
+						height: "95vh",
+						maxWidth: "100vw",
 					}}
 					onClick={(e) => e.stopPropagation()}>
 					{!confirmed ? (
@@ -119,3 +179,14 @@ export default function CheckoutModal({ isOpen, onClose, restaurantId, cartItems
 		</Elements>
 	);
 }
+
+/**
+ * Testing Notes:
+ * - Verify modal appears/disappears based on isOpen prop.
+ * - Test API POST call to /api/restaurant/{restaurantId}/payments sends cart correctly.
+ * - Confirm clientSecret is set on successful API response.
+ * - Test error state when API call fails.
+ * - Validate embedded checkout renders with valid clientSecret.
+ * - Confirm payment success triggers confirmation UI.
+ * - Test modal closes reset state and call onClose prop.
+ */

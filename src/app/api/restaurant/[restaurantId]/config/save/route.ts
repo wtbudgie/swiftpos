@@ -2,7 +2,6 @@
  * File: updateRestaurant.ts
  * Description: API endpoint to update restaurant details in the SwiftPOS database.
  * Author: William Anderson
- * Created: 2025-06-19
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -90,9 +89,4 @@ export async function POST(req: NextRequest, { params }: { params: Params }): Pr
  * - Submit update data and confirm correct MongoDB document modification.
  * - Test empty update data payload and verify proper error response.
  * - Attempt updates on non-existent restaurant IDs to confirm 404 response.
- *
- * Future Enhancements:
- * - Add authentication to restrict update access.
- * - Validate updateData fields to prevent invalid or unauthorized changes.
- * - Implement logging of update history for audit purposes.
  */

@@ -2,7 +2,6 @@
  * File: socketHandler.ts
  * Description: WebSocket handler for managing real-time order updates in SwiftPOS.
  * Author: William Anderson
- * Created: 2025-06-19
  */
 
 import { Restaurant } from "@/types/RestaurantType";
@@ -217,9 +216,4 @@ export async function SOCKET(
  *    b) email is sent
  *    c) broadcast updates are received by all clients
  * - Disconnect client and ensure it is removed from wsStore.
- *
- * Future Enhancements:
- * - Add authentication to validate client access to a restaurant
- * - Implement retry mechanism for failed emails
- * - Support push notification fallback for users without email
  */

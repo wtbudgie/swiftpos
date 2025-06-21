@@ -3,31 +3,30 @@ import NextAuth, { DefaultSession, DefaultUser } from "next-auth";
 
 declare module "next-auth" {
 	interface User {
-		id: string;
+		_id: ObjectId;
+		emailVerified: string;
 		email: string;
-		emailVerified: string | null;
-		firstName: string;
-		secondName: string;
 		phoneNumber: string;
-		onboarded: boolean;
-		ownerOf: string[];
 		employeeOf: string[];
-		pastOrders: string[];
+		firstName: string | null;
+		secondName: string | null;
+		onboarded: boolean;
+		ownerOf: string[]; // array of restaurant IDs the user owns
+		pastOrders: UserOrderReceipt[]; // user’s past orders (receipts)
 	}
 
 	interface Session {
 		user: {
-			id: string;
+			_id: ObjectId;
+			emailVerified: string;
 			email: string;
-			emailVerified: string | null;
-			firstName: string;
-			secondName: string;
-			postcode: string | null;
-			state: string;
-			onboarded: boolean;
-			ownerOf: string[];
+			phoneNumber: string;
 			employeeOf: string[];
-			pastOrders: string[];
+			firstName: string | null;
+			secondName: string | null;
+			onboarded: boolean;
+			ownerOf: string[]; // array of restaurant IDs the user owns
+			pastOrders: UserOrderReceipt[]; // user’s past orders (receipts)
 		} & DefaultSession["user"];
 	}
 }

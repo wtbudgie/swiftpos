@@ -4,7 +4,6 @@
  *              Processes payment confirmation, updates orders in the database,
  *              and broadcasts updated order data via WebSocket to the relevant restaurant.
  * Author: William Anderson
- * Created: 2025-06-19
  */
 
 import Stripe from "stripe";
@@ -61,19 +60,15 @@ export async function POST(request: NextRequest) {
 
 	// Only process checkout.session.completed and async payment succeeded events
 	if (eventType !== "checkout.session.completed" && eventType !== "checkout.session.async_payment_succeeded") {
-		console.log("event not handled", eventType);
-		console.error("Event type not handled", { status: 200 }); // ignore other events
 		return new Response(JSON.stringify({ message: "Event type not handled." }), { status: 200 });
 	}
 
 	// Extract the session object and metadata from the Stripe event
 	const session = event.data.object as Stripe.Checkout.Session;
 	const metadata = session.metadata as METADATA;
-	console.log("Pending Order ID:", metadata.pendingOrderId);
 
 	// Check for required metadata fields
 	if (!metadata?.userId || !metadata?.restaurantId || !metadata?.pendingOrderId) {
-		console.log(metadata);
 		console.error("Missing metadata", { status: 400 });
 		return new Response(JSON.stringify({ message: "Missing metadata." }), { status: 400 });
 	}
@@ -163,10 +158,4 @@ export async function POST(request: NextRequest) {
  * - Verify the database is updated: activeOrders in restaurant, pastOrders in user.
  * - Confirm pending order is deleted from pendingOrders collection.
  * - Check that WebSocket broadcast is triggered with correct order data.
- *
- * Future Enhancements:
- * - Add authentication/authorization checks for webhook requests.
- * - Validate cart items more thoroughly before confirming orders.
- * - Implement retry or dead-letter queue for failed WebSocket broadcasts.
- * - Add logging improvements for better operational monitoring.
  */

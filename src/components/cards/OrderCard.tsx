@@ -1,3 +1,11 @@
+/**
+ * File: OrderCard.tsx
+ * Description: React component displaying detailed order information for SwiftPOS users,
+ * including restaurant name, order ID, timestamps, status, itemized list, pricing breakdown,
+ * and functionality to generate a PDF receipt of the order.
+ * Author: William Anderson
+ */
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -6,17 +14,42 @@ import { UserOrderReceipt, OrderStatus } from "@/types/OrderType";
 import jsPDF from "jspdf";
 
 type OrderCardProps = {
-	onClick?: (item: Item) => void;
-	orderData: UserOrderReceipt;
+	onClick?: (item: Item) => void; // Optional callback triggered on item click (not used internally here)
+	orderData: UserOrderReceipt; // Object containing all relevant order details
 };
 
-export default function OrderCard({ onClick, orderData }: OrderCardProps) {
+/**
+ * Component: OrderCard
+ * Input:
+ *  - onClick (optional): function(Item) => void, callback for clicking an item
+ *  - orderData: UserOrderReceipt, includes order ID, restaurant name, status, items, prices, timestamps
+ * Output:
+ *  - JSX element rendering order summary and items, with a button to export a PDF receipt
+ *
+ * Description:
+ * Displays all pertinent information about a customer's order including status and items.
+ * Formats order placed timestamp for readability.
+ * Allows user to generate and download a detailed PDF receipt of the order.
+ */
+export default function OrderCard({ orderData }: OrderCardProps) {
+	// State to store human-readable formatted order date/time string
 	const [formattedDate, setFormattedDate] = useState("");
 
+	// Effect to format the orderPlacedAt ISO timestamp to local date/time string whenever it changes
 	useEffect(() => {
 		setFormattedDate(new Date(orderData.orderPlacedAt).toLocaleString());
 	}, [orderData.orderPlacedAt]);
 
+	/**
+	 * Function: generateReceiptPDF
+	 * Input: none (uses orderData and formattedDate from closure)
+	 * Output: void (triggers PDF file download)
+	 *
+	 * Description:
+	 * Creates a PDF document using jsPDF library.
+	 * Adds header, order details (restaurant, ID, date, status), itemized list, discount, and totals.
+	 * Saves PDF file named "receipt-{orderId}.pdf" for user download.
+	 */
 	const generateReceiptPDF = () => {
 		const doc = new jsPDF();
 
@@ -42,6 +75,7 @@ export default function OrderCard({ onClick, orderData }: OrderCardProps) {
 		doc.save(`receipt-${orderData.id}.pdf`);
 	};
 
+	// JSX render of order card UI
 	return (
 		<div className="w-full bg-white border border-gray-600 rounded-lg shadow-md p-6 mb-6">
 			<div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 md:gap-0">
@@ -102,3 +136,11 @@ export default function OrderCard({ onClick, orderData }: OrderCardProps) {
 		</div>
 	);
 }
+
+/**
+ * Testing Notes:
+ * - Verify that formattedDate updates correctly based on orderData.orderPlacedAt.
+ * - Click "View Full Receipt" button generates and downloads a properly formatted PDF.
+ * - Check PDF contents match the displayed order summary, including all items, prices, discounts, and totals.
+ * - Test rendering with various order statuses and empty item lists.
+ */

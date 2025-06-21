@@ -1,7 +1,7 @@
 /**
  * File: RestaurantPage.tsx
- * Description: Server-side page to load public restaurant data and render the restaurant layout.
- *              Redirects to home if restaurant not found.
+ * Description: Server-side page component that fetches and renders public restaurant data.
+ *              Redirects to homepage if the specified restaurant does not exist.
  * Author: William Anderson
  */
 
@@ -15,7 +15,20 @@ import { Category, Item } from "@/types/RestaurantType";
 import RestaurantLayout from "@/layouts/restaurantPage/RestaurantLayout";
 
 /**
- * Type for the restaurant data returned from DB with selected fields.
+ * Interface: ReturnedRestaurant
+ * Input:
+ * - _id: string — MongoDB ObjectId string of the restaurant
+ * - name: string — Name of the restaurant
+ * - description: string — Brief description of the restaurant
+ * - ownerId: string — ID of the restaurant owner
+ * - categories: Category[] — Array of category objects the restaurant has
+ * - items: Item[] — Array of menu items available
+ * - dietaries: string[] — Array of dietary tags applicable to the restaurant's items
+ * Output:
+ * - Typed object representing a subset of restaurant data fetched from the database
+ *
+ * Description:
+ * Defines the shape of the restaurant data exposed publicly by this page, restricting fields for security.
  */
 export interface ReturnedRestaurant {
 	_id: string;
@@ -28,28 +41,42 @@ export interface ReturnedRestaurant {
 }
 
 /**
- * Params type representing the route params containing restaurantId.
- * Awaited since params may be a Promise.
+ * Type: Params
+ * Input:
+ * - Promise resolving to an object with restaurantId as string
+ * Output:
+ * - Used for typing the async route params for Next.js dynamic routes
+ *
+ * Description:
+ * Represents the dynamic route parameter expected to fetch restaurant data.
  */
 type Params = Promise<{ restaurantId: string }>;
 
 /**
- * Page component for rendering the restaurant's public page.
+ * Function: RestaurantPage
+ * Input:
+ * - params: object containing Promise-resolved route parameters with restaurantId string
+ * Output:
+ * - JSX.Element rendering RestaurantLayout if restaurant data found, or redirect to home if not
  *
- * @param params - Route params including restaurantId.
- * @returns JSX.Element rendering RestaurantLayout or redirects if no data.
+ * Description:
+ * Server component that:
+ * 1. Authenticates user session (optional)
+ * 2. Retrieves restaurant data by ID
+ * 3. Redirects to homepage if no restaurant found
+ * 4. Passes fetched restaurant data and session to RestaurantLayout for rendering
  */
 export default async function RestaurantPage({ params }: { params: Params }) {
 	const session = await auth();
 	const { restaurantId } = await params;
 
-	// Fetch limited restaurant data for public view
+	// Fetch public restaurant data with limited fields
 	const restaurantData = await getRestaurantData(restaurantId);
 
-	// Redirect to homepage if restaurant not found
+	// Redirect home if restaurant does not exist
 	if (!restaurantData) redirect("/");
 
-	// Render restaurant layout, pass session for personalization if available
+	// Render the restaurant layout with session context (may be null)
 	return (
 		<div className="h-full">
 			<RestaurantLayout restaurantData={restaurantData} session={session ?? null} />
@@ -58,17 +85,25 @@ export default async function RestaurantPage({ params }: { params: Params }) {
 }
 
 /**
- * Fetches a sanitized subset of restaurant data from MongoDB.
+ * Function: getRestaurantData
+ * Input:
+ * - restaurantId: string — MongoDB ObjectId string representing the restaurant document to fetch
+ * Output:
+ * - Promise resolving to ReturnedRestaurant object if found, otherwise null
  *
- * @param restaurantId - The MongoDB ObjectId string of the restaurant.
- * @returns Promise resolving to restaurant data or null if not found/error.
+ * Description:
+ * Connects to the SwiftPOS MongoDB, queries the restaurants collection,
+ * and returns a sanitized subset of fields suitable for public display.
+ * Uses projection to limit the data fetched.
+ * Converts the _id ObjectId to string before returning.
+ * Catches and logs any DB errors, returning null on failure.
  */
 const getRestaurantData = async (restaurantId: string): Promise<ReturnedRestaurant | null> => {
 	const db = client.db("SwiftPOS");
 	const collection = db.collection("restaurants");
 
 	try {
-		// Query with projection to limit fetched fields
+		// Query restaurant with projection to include only public fields
 		const restaurant = await collection.findOne(
 			{ _id: new ObjectId(restaurantId) },
 			{
@@ -86,7 +121,7 @@ const getRestaurantData = async (restaurantId: string): Promise<ReturnedRestaura
 
 		if (!restaurant) return null;
 
-		// Return sanitized restaurant object with stringified _id
+		// Return restaurant data with _id converted to string for client use
 		return {
 			_id: restaurant._id.toString(),
 			name: restaurant.name,
@@ -101,3 +136,11 @@ const getRestaurantData = async (restaurantId: string): Promise<ReturnedRestaura
 		return null;
 	}
 };
+
+/**
+ * Testing Notes:
+ * - Verify redirect occurs when invalid or missing restaurantId is provided.
+ * - Confirm restaurant data renders correctly with all expected fields.
+ * - Test rendering with and without an authenticated session.
+ * - Simulate DB errors and confirm error logging without crashing.
+ */

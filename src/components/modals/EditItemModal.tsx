@@ -1,3 +1,10 @@
+/**
+ * File: EditItemModal.tsx
+ * Description: Modal component for editing menu items in SwiftPOS, including their details,
+ * ingredients, and modification options. Handles image uploads and form state management.
+ * Author: William Anderson
+ */
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -5,6 +12,18 @@ import Image from "next/image";
 
 import { Item, Ingredient, ModificationGroup, ModificationOption } from "@/types/RestaurantType";
 
+/**
+ * Type: EditItemModalProps
+ *
+ * Props for the EditItemModal component:
+ * - isOpen: boolean — controls modal visibility
+ * - onClose: () => void — callback to close modal
+ * - item: Item — the item being edited
+ * - onSave: (updatedItem: Item) => void — callback when saving changes
+ * - onDelete: (itemId: string) => void — callback when deleting item
+ * - restaurantDietaries: string[] — available dietary options for the restaurant
+ * - restaurantId: string — ID of the current restaurant
+ */
 type EditItemModalProps = {
 	isOpen: boolean;
 	onClose: () => void;
@@ -15,17 +34,47 @@ type EditItemModalProps = {
 	restaurantId: string;
 };
 
+/**
+ * Component: EditItemModal
+ *
+ * Input:
+ * - Props as defined in EditItemModalProps
+ *
+ * Output:
+ * - React component rendering a modal form
+ * - Calls onSave with updated item data when saved
+ * - Calls onDelete when item is deleted
+ *
+ * Description:
+ * Provides a comprehensive interface for editing all aspects of a menu item including:
+ * - Basic details (name, description, price)
+ * - Image upload and preview
+ * - Dietary options selection
+ * - Ingredients management
+ * - Modification groups and options
+ * Handles form state management and validation internally.
+ */
 export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete, restaurantDietaries, restaurantId }: EditItemModalProps) {
 	const timestamp = Date.now();
 	const [formState, setFormState] = useState<Item>(item);
 	const [imagePreview, setImagePreview] = useState<string | null>(item.imageUrl || null);
 
+	// Reset form when item prop changes
 	useEffect(() => {
 		setFormState(item);
 	}, [item]);
 
-	// ----- Handlers -----
+	// ----- Form Handlers -----
 
+	/**
+	 * Handler: handleChange
+	 * Input:
+	 * - e: React.ChangeEvent — form input change event
+	 *
+	 * Description:
+	 * Updates form state for basic text/number inputs. Special handling for price field
+	 * to ensure numeric value.
+	 */
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		const { name, value } = e.target;
 		setFormState((prev) => ({
@@ -34,6 +83,15 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 		}));
 	};
 
+	/**
+	 * Handler: handleDietaryChange
+	 * Input:
+	 * - e: React.ChangeEvent — checkbox change event
+	 *
+	 * Description:
+	 * Toggles dietary options in form state, adding or removing the selected option
+	 * from the dietaries array.
+	 */
 	const handleDietaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
 		setFormState((prev) => {
@@ -45,38 +103,89 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 		});
 	};
 
+	/**
+	 * Handler: handleSave
+	 *
+	 * Description:
+	 * Triggers the onSave callback with current form state and closes the modal.
+	 */
 	const handleSave = () => {
 		onSave(formState);
 		onClose();
 	};
 
+	/**
+	 * Handler: handleBackdropClick
+	 *
+	 * Description:
+	 * Placeholder for potential backdrop click handling. Currently disabled to prevent
+	 * accidental closure with unsaved changes.
+	 */
 	const handleBackdropClick = () => {
 		//onClose();
 	};
 
-	// ----- Ingredients -----
+	// ----- Ingredients Management -----
 
+	/**
+	 * Function: addIngredient
+	 *
+	 * Description:
+	 * Adds a new empty ingredient to the form state with a unique timestamp-based ID.
+	 */
 	const addIngredient = () => {
 		setFormState((prev) => ({
 			...prev,
-			ingredients: [...prev.ingredients, { id: `ing-${timestamp}`, name: "", quantity: "" }],
+			ingredients: [
+				...prev.ingredients,
+				{
+					id: `ing-${timestamp}`,
+					name: "",
+					quantity: "",
+				},
+			],
 		}));
 	};
 
+	/**
+	 * Function: updateIngredient
+	 * Input:
+	 * - index: number — position in ingredients array
+	 * - field: keyof Ingredient — field to update
+	 * - value: string — new value
+	 *
+	 * Description:
+	 * Updates a specific field of an ingredient at the given index.
+	 */
 	const updateIngredient = (index: number, field: keyof Ingredient, value: string) => {
 		const updated = [...formState.ingredients];
 		updated[index][field] = value;
 		setFormState((prev) => ({ ...prev, ingredients: updated }));
 	};
 
+	/**
+	 * Function: removeIngredient
+	 * Input:
+	 * - index: number — position in ingredients array
+	 *
+	 * Description:
+	 * Removes the ingredient at the specified index from the form state.
+	 */
 	const removeIngredient = (index: number) => {
 		const updated = [...formState.ingredients];
 		updated.splice(index, 1);
 		setFormState((prev) => ({ ...prev, ingredients: updated }));
 	};
 
-	// ----- Modifications -----
+	// ----- Modifications Management -----
 
+	/**
+	 * Function: addModificationGroup
+	 *
+	 * Description:
+	 * Adds a new empty modification group to the form state with default values
+	 * and a unique timestamp-based ID.
+	 */
 	const addModificationGroup = () => {
 		const newGroup: ModificationGroup = {
 			id: `modgrp-${timestamp}`,
@@ -91,67 +200,118 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 		}));
 	};
 
+	/**
+	 * Function: updateModificationGroup
+	 * Input:
+	 * - index: number — position in modifications array
+	 * - field: K — field to update
+	 * - value: ModificationGroup[K] — new value
+	 *
+	 * Description:
+	 * Updates a specific field of a modification group at the given index.
+	 */
 	const updateModificationGroup = <K extends keyof ModificationGroup>(index: number, field: K, value: ModificationGroup[K]) => {
 		const updated = [...(formState.modifications || [])];
 		updated[index][field] = value;
 		setFormState((prev) => ({ ...prev, modifications: updated }));
 	};
 
+	/**
+	 * Function: removeModificationGroup
+	 * Input:
+	 * - index: number — position in modifications array
+	 *
+	 * Description:
+	 * Removes the modification group at the specified index from the form state.
+	 */
 	const removeModificationGroup = (index: number) => {
 		const updated = [...(formState.modifications || [])];
 		updated.splice(index, 1);
 		setFormState((prev) => ({ ...prev, modifications: updated }));
 	};
 
+	/**
+	 * Function: addModificationOption
+	 * Input:
+	 * - groupIndex: number — position of parent group in modifications array
+	 *
+	 * Description:
+	 * Adds a new empty option to the specified modification group with default values
+	 * and a unique timestamp-based ID.
+	 */
 	const addModificationOption = (groupIndex: number) => {
 		const group = formState.modifications?.[groupIndex];
 		if (!group) return;
+
 		const newOption: ModificationOption = {
 			id: `mod-${timestamp}`,
 			name: "",
 			priceModifier: 0,
 		};
+
 		const updatedGroups = [...formState.modifications!];
 		updatedGroups[groupIndex].options.push(newOption);
 		setFormState((prev) => ({ ...prev, modifications: updatedGroups }));
 	};
 
+	/**
+	 * Function: updateModificationOption
+	 * Input:
+	 * - groupIndex: number — position of parent group
+	 * - optionIndex: number — position of option in group
+	 * - field: K — field to update
+	 * - value: ModificationOption[K] — new value
+	 *
+	 * Description:
+	 * Updates a specific field of a modification option with special handling for
+	 * numeric priceModifier fields to prevent NaN values.
+	 */
 	const updateModificationOption = <K extends keyof ModificationOption>(groupIndex: number, optionIndex: number, field: K, value: ModificationOption[K]) => {
 		if (field === "priceModifier" && typeof value === "number" && isNaN(value)) {
 			value = 0 as ModificationOption[K]; // default fallback
 		}
+
 		const updatedGroups = [...(formState.modifications || [])];
 		updatedGroups[groupIndex].options[optionIndex][field] = value;
 		setFormState((prev) => ({ ...prev, modifications: updatedGroups }));
 	};
 
+	/**
+	 * Function: removeModificationOption
+	 * Input:
+	 * - groupIndex: number — position of parent group
+	 * - optionIndex: number — position of option in group
+	 *
+	 * Description:
+	 * Removes the specified option from its modification group.
+	 */
 	const removeModificationOption = (groupIndex: number, optionIndex: number) => {
 		const updatedGroups = [...formState.modifications!];
 		updatedGroups[groupIndex].options.splice(optionIndex, 1);
 		setFormState((prev) => ({ ...prev, modifications: updatedGroups }));
 	};
 
+	// Reset form when item changes
 	useEffect(() => {
 		setFormState(item);
 		setImagePreview(item.imageUrl || null);
 	}, [item]);
 
-	// ----- UI -----
-
+	// ----- Component Render -----
 	return (
 		<div
 			className={`fixed inset-0 z-[999] flex items-center justify-center
-			bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-in-out
-			${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+            bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-in-out
+            ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
 			onClick={handleBackdropClick}>
 			<div
 				onClick={(e) => e.stopPropagation()}
 				className="bg-white text-black w-full max-w-2xl mx-4 p-6 rounded-lg shadow-lg relative overflow-y-auto max-h-[90vh]">
 				<h2 className="text-2xl font-bold mb-4 text-center">Edit Item</h2>
 
-				{/* Image Upload */}
+				{/* Image Upload Section */}
 				<div className="mb-4">
-					<label className="block text-sm font-medium mb-1">Upload Image</label>
+					<label className="block text-sm font-medium mb-1">Upload Image (We recommend a 4:3 image with a minimum of 400x300)</label>
 					<input
 						type="file"
 						accept="image/*"
@@ -177,13 +337,13 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 					)}
 				</div>
 
-				{/* Name */}
+				{/* Name Field */}
 				<div className="mb-4">
 					<label className="block text-sm font-medium mb-1">Name</label>
 					<input type="text" name="name" value={formState.name} onChange={handleChange} className="w-full border px-3 py-2 rounded" />
 				</div>
 
-				{/* Description */}
+				{/* Description Field */}
 				<div className="mb-4">
 					<label className="block text-sm font-medium mb-1">Description</label>
 					<textarea
@@ -195,7 +355,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 					/>
 				</div>
 
-				{/* Price */}
+				{/* Price Field */}
 				<input
 					type="number"
 					name="price"
@@ -206,7 +366,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 					min="0"
 				/>
 
-				{/* Dietaries */}
+				{/* Dietary Options Section */}
 				<div className="mb-4">
 					<label className="block text-sm font-medium mb-1">Dietary Options</label>
 					<div className="border rounded p-2 space-y-2 max-h-32 overflow-y-auto">
@@ -225,7 +385,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 					</div>
 				</div>
 
-				{/* Ingredients */}
+				{/* Ingredients Management Section */}
 				<div className="mb-6">
 					<div className="flex justify-between items-center mb-2">
 						<label className="block text-sm font-medium">Ingredients</label>
@@ -256,7 +416,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 					))}
 				</div>
 
-				{/* Modifications */}
+				{/* Modifications Management Section */}
 				<div className="mb-6">
 					<div className="flex justify-between items-center mb-2">
 						<label className="block text-sm font-medium">Modifications</label>
@@ -294,7 +454,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 								</button>
 							</div>
 
-							{/* Options */}
+							{/* Modification Options List */}
 							<div className="mb-2">
 								{group.options.map((option, optIdx) => (
 									<div key={option.id} className="flex gap-2 mb-2">
@@ -327,7 +487,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 					))}
 				</div>
 
-				{/* Actions */}
+				{/* Action Buttons */}
 				<div className="mt-6 flex justify-end gap-2">
 					<button
 						onClick={() => {
@@ -352,6 +512,18 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 	);
 }
 
+/**
+ * Function: uploadImage
+ * Input:
+ * - file: File — image file to upload
+ * - restaurantId: string — ID of restaurant for API route
+ *
+ * Output:
+ * - Promise<string> — resolves to image URL
+ *
+ * Description:
+ * Handles image upload to server via API endpoint. Throws error if upload fails.
+ */
 async function uploadImage(file: File, restaurantId: string): Promise<string> {
 	const formData = new FormData();
 	formData.append("file", file);
@@ -368,3 +540,16 @@ async function uploadImage(file: File, restaurantId: string): Promise<string> {
 	const data = await res.json();
 	return data.url;
 }
+
+/**
+ * Testing Notes:
+ * - Verify modal opens/closes properly based on isOpen prop
+ * - Test image upload functionality with various file types
+ * - Validate all form fields update state correctly
+ * - Test ingredient addition/removal functionality
+ * - Test modification group and option management
+ * - Verify save/delete callbacks trigger with correct data
+ * - Test dietary options selection behavior
+ * - Validate price field handles numeric input correctly
+ * - Test component responsiveness and overflow behavior
+ */

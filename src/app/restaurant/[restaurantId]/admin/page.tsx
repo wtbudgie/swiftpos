@@ -1,8 +1,7 @@
 /**
  * File: RestaurantPage.tsx
- * Description: Server-side page to load restaurant data for admin access.
- *              It performs session validation and owner authorization,
- *              then renders the admin layout with the full restaurant data.
+ * Description: Server-side page to load restaurant data for admin access in SwiftPOS.
+ *              Validates user session and ownership before rendering the admin layout with full restaurant details.
  * Author: William Anderson
  */
 
@@ -16,60 +15,80 @@ import { Restaurant } from "@/types/RestaurantType";
 
 import AdminLayout from "@/layouts/adminPage/AdminLayout";
 
-// Type representing minimal restaurant data fetched for authorization checks
+/**
+ * Interface: ReturnedRestaurant
+ * Represents minimal restaurant data used for authorization checks.
+ * _id: string - Restaurant ID as string.
+ * ownerId: string - Owner user ID.
+ */
 export interface ReturnedRestaurant {
 	_id: string;
 	ownerId: string;
 }
 
-// Restaurant type with _id as string (sanitized for client usage)
+/**
+ * Type: SanitizedRestaurant
+ * Represents full restaurant data sanitized for client use.
+ * Converts MongoDB ObjectId to string for _id.
+ */
 export type SanitizedRestaurant = Omit<Restaurant, "_id"> & {
 	_id: string;
 };
 
-// Typing for params passed in props
+/**
+ * Type: Params
+ * Represents the parameters passed to the page component.
+ * Contains restaurantId as a string inside a Promise.
+ */
 type Params = Promise<{ restaurantId: string }>;
 
 /**
- * Page component that loads restaurant data and renders admin interface.
- * Redirects users if not authorized or data not found.
+ * Function: AdminPage (default export)
+ * Input:
+ * - params: { restaurantId: string } (wrapped in Promise)
+ * Output:
+ * - JSX Element rendering the AdminLayout or redirects unauthorized users
+ *
+ * Description:
+ * Loads the current user's session and verifies ownership of the restaurant.
+ * Fetches minimal restaurant data for authorization, redirects if not found or unauthorized.
+ * If authorized, fetches full restaurant data and renders AdminLayout.
  */
 export default async function AdminPage({ params }: { params: Params }) {
 	const session = await auth();
 	const { restaurantId } = await params;
 
-	// Fetch minimal restaurant data for authorization
 	const restaurantData = await getRestaurantData(restaurantId);
 	if (!restaurantData) {
-		// Redirect to public restaurant page if restaurant not found
+		// Redirect to public restaurant page if restaurant does not exist
 		redirect(`/restaurant/${restaurantId}`);
 	}
 
-	// Redirect if user is not authenticated or not the owner
 	if (!session || session.user?.id !== restaurantData.ownerId) {
+		// Redirect unauthorized users to public restaurant page
 		redirect(`/restaurant/${restaurantId}`);
 	}
 
-	// Fetch full restaurant data for admin view
 	const fullRestaurantData = await getFullRestaurantData(restaurantId);
 	if (!fullRestaurantData) {
-		// Redirect to home if full data is missing
+		// Redirect to home if full restaurant data cannot be fetched
 		redirect("/");
 	}
 
-	// Render the admin layout with fetched data
-	return (
-		<>
-			<AdminLayout restaurantData={fullRestaurantData} session={session} />
-		</>
-	);
+	// Render admin interface with full restaurant details
+	return <AdminLayout restaurantData={fullRestaurantData} session={session} />;
 }
 
 /**
- * Fetches minimal restaurant data (_id and ownerId) from the database.
+ * Function: getRestaurantData
+ * Input:
+ * - restaurantId: string - Restaurant's unique ID
+ * Output:
+ * - Promise resolving to ReturnedRestaurant object or null if not found
  *
- * @param {string} restaurantId - The restaurant's ID.
- * @returns {Promise<ReturnedRestaurant | null>} - The restaurant data or null if not found.
+ * Description:
+ * Retrieves minimal restaurant data (_id and ownerId) from the database,
+ * used for verifying ownership during authorization.
  */
 const getRestaurantData = async (restaurantId: string): Promise<ReturnedRestaurant | null> => {
 	const db = client.db("SwiftPOS");
@@ -91,10 +110,15 @@ const getRestaurantData = async (restaurantId: string): Promise<ReturnedRestaura
 };
 
 /**
- * Fetches full restaurant data from the database and sanitizes it.
+ * Function: getFullRestaurantData
+ * Input:
+ * - restaurantId: string - Restaurant's unique ID
+ * Output:
+ * - Promise resolving to SanitizedRestaurant object or null if not found
  *
- * @param {string} restaurantId - The restaurant's ID.
- * @returns {Promise<SanitizedRestaurant | null>} - The full restaurant data or null if not found.
+ * Description:
+ * Retrieves the full restaurant document from the database,
+ * sanitizes it by converting the ObjectId to string and returning relevant fields.
  */
 const getFullRestaurantData = async (restaurantId: string): Promise<SanitizedRestaurant | null> => {
 	const db = client.db("SwiftPOS");
@@ -105,7 +129,6 @@ const getFullRestaurantData = async (restaurantId: string): Promise<SanitizedRes
 
 		if (!restaurant) return null;
 
-		// Explicitly construct the sanitized restaurant object
 		return {
 			_id: restaurant._id.toString(),
 			name: restaurant.name,

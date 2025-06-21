@@ -1,22 +1,29 @@
 /**
  * File: MainPage.tsx
- * Description: Server-side React component that renders the main landing page with a list of restaurants.
- *              Fetches session and restaurant data from the database and displays restaurant cards.
+ * Description: Server-side React component rendering the main landing page of SwiftPOS.
+ *              Fetches user session and restaurant data from the database,
+ *              then displays a list of restaurants as interactive cards.
  * Author: William Anderson
  */
 
 import React from "react";
 import { auth } from "@/utils/auth";
-
 import RestaurantCard from "@/components/cards/RestaurantCard";
-
 import FooterSection from "@/layouts/homePage/sections/FooterSection";
 import HeaderSection from "@/layouts/homePage/sections/HeaderSection";
-
 import client from "@/utils/db";
 
 /**
- * Interface representing the essential data returned for each restaurant.
+ * Interface: ReturnedRestaurant
+ * Represents the essential fields of a restaurant document returned from MongoDB.
+ *
+ * Properties:
+ * - _id: string — Unique identifier of the restaurant.
+ * - name: string — Restaurant name.
+ * - description: string — Brief description of the restaurant.
+ * - address: string — Physical address.
+ * - imageUrl: string — URL for the restaurant's image.
+ * - ownerId: string — Owner's unique identifier.
  */
 interface ReturnedRestaurant {
 	_id: string;
@@ -28,37 +35,44 @@ interface ReturnedRestaurant {
 }
 
 /**
- * MainPage - Async server component
- * Fetches current user session and the list of restaurants from the database.
- * Passes data to child components for rendering the page.
+ * Function: MainPage
+ * Asynchronous React server component that:
+ * - Retrieves the current user session via auth().
+ * - Fetches the list of restaurants from the database.
+ * - Renders the landing page with header, restaurant cards, and footer.
  *
- * @returns {JSX.Element} The main page JSX.
+ * Input: none
+ * Output: JSX.Element — the complete page structure.
+ *
+ * Notes:
+ * - User registration availability is set false if the user is not onboarded.
+ * - Restaurants with missing descriptions or images have placeholders.
  */
 export default async function MainPage() {
-	// Retrieve current user session
+	// Get current authenticated session (nullable)
 	const session = await auth();
 
-	// Fetch restaurants from database
+	// Fetch all restaurants from DB
 	const restuarantList = await getRestaurantList();
 
-	// Determine if user registration is open (false if user not onboarded)
+	// Flag controlling registration UI based on user onboarding status
 	let registerOpen = false;
 	if (!session?.user?.onboarded) registerOpen = false;
 
 	return (
 		<>
-			{/* Main container with white background and vertical flex layout */}
+			{/* Page container with white background and vertical flex layout */}
 			<div className="min-h-screen bg-white flex flex-col relative">
 				{/* Scrollable content area with padding */}
 				<div className="flex-1 overflow-y-auto px-6 py-10 pb-40">
 					<div className="max-w-5xl mx-auto text-center">
-						{/* Header with user info and registration status */}
+						{/* Page header showing user info and registration prompt */}
 						<HeaderSection user={session?.user ?? null} registerOpen={registerOpen} />
 
-						{/* Instructional paragraph */}
+						{/* Instructional text prompting restaurant selection */}
 						<p className="text-lg text-gray mb-10 font-semibold">Please select a restaurant you would like to order pickup from.</p>
 
-						{/* Grid layout for restaurant cards */}
+						{/* Responsive grid of restaurant cards */}
 						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 							{restuarantList.map((r) => (
 								<RestaurantCard
@@ -74,7 +88,7 @@ export default async function MainPage() {
 					</div>
 				</div>
 
-				{/* Fixed footer contact section */}
+				{/* Fixed footer section with contact info */}
 				<FooterSection />
 			</div>
 		</>
@@ -82,16 +96,25 @@ export default async function MainPage() {
 }
 
 /**
- * Fetches the list of restaurants from MongoDB database.
+ * Function: getRestaurantList
+ * Fetches a list of restaurants from the MongoDB SwiftPOS database.
  *
- * @returns {Promise<ReturnedRestaurant[]>} Promise resolving to an array of restaurants and returns empty array on error.
+ * Inputs: none
+ * Outputs:
+ * - Promise<ReturnedRestaurant[]> — resolves to an array of restaurants
+ * - Returns empty array on failure to avoid UI errors.
+ *
+ * Behavior:
+ * - Queries the "restaurants" collection with a projection for performance.
+ * - Converts MongoDB ObjectIds to strings for client consumption.
+ * - Handles errors by logging and returning an empty array.
  */
 const getRestaurantList = async (): Promise<ReturnedRestaurant[]> => {
 	const db = client.db("SwiftPOS");
 	const collection = db.collection("restaurants");
 
 	try {
-		// Query restaurants with only required fields for performance
+		// Query with projection to return only needed fields
 		const restaurants = await collection
 			.find(
 				{},
@@ -108,7 +131,7 @@ const getRestaurantList = async (): Promise<ReturnedRestaurant[]> => {
 			)
 			.toArray();
 
-		// Transform MongoDB documents to application-friendly format
+		// Map Mongo documents to ReturnedRestaurant interface, converting ObjectIds to strings
 		const parsedRestaurants: ReturnedRestaurant[] = restaurants.map((r) => ({
 			_id: r._id.toString(),
 			name: r.name,
@@ -121,7 +144,15 @@ const getRestaurantList = async (): Promise<ReturnedRestaurant[]> => {
 		return parsedRestaurants;
 	} catch (error) {
 		console.error("Failed to fetch restaurants:", error);
-		// Return empty list in case of failure
+		// Return empty array on error to prevent UI crash
 		return [];
 	}
 };
+
+/**
+ * Testing Notes:
+ * - Verify session is correctly fetched and passed to HeaderSection.
+ * - Confirm restaurant list renders correctly with valid and placeholder data.
+ * - Test grid responsiveness and scrolling behavior on multiple screen sizes.
+ * - Simulate DB failure and check that empty restaurant list does not break UI.
+ */

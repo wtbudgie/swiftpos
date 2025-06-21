@@ -3,7 +3,6 @@
  * Description: API route handler to create a default restaurant for an owner in SwiftPOS.
  *              Includes admin authorization, validation of input, and inserting default restaurant data.
  * Author: William Anderson
- * Created: 2025-06-19
  */
 
 import { NextRequest } from "next/server";
@@ -164,9 +163,4 @@ export async function GET(req: NextRequest): Promise<Response> {
  * - Test valid and invalid ownerId query parameters.
  * - Confirm default restaurant document is inserted with correct structure.
  * - Validate response includes restaurantId, ownerId, ownerEmail, and access URL.
- *
- * Future Enhancements:
- * - Add detailed validation on restaurant fields before insertion.
- * - Support custom restaurant data from client input.
- * - Implement logging for failed insert operations.
  */

@@ -2,7 +2,6 @@
  * File: updateUser.ts
  * Description: API route handler for updating user profile information in SwiftPOS.
  * Author: William Anderson
- * Created: 2025-06-19
  */
 
 import { NextRequest } from "next/server";
@@ -118,9 +117,4 @@ export async function PUT(req: NextRequest) {
  * - Send valid JSON body missing required string fields, expect 400 response.
  * - Test updating with and without the optional onboarded boolean.
  * - Test with non-existent user email, expect 404 response.
- *
- * Future Enhancements:
- * - Add more detailed validation for phoneNumber format.
- * - Allow partial updates (PATCH) for only some fields.
- * - Implement rate limiting or throttling to prevent abuse.
  */

@@ -3,7 +3,6 @@
  * Description: API route to create a new order for a restaurant, validate cart items, store a pending order in DB,
  *              and initiate a Stripe payment session for checkout.
  * Author: William Anderson
- * Created: 2025-06-19
  */
 
 import { auth } from "@/utils/auth";
@@ -167,9 +166,4 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ res
  * - Confirm pending order is created in DB.
  * - Verify Stripe checkout session is created with correct line items and metadata.
  * - Simulate payment completion and order status update.
- *
- * Future Enhancements:
- * - Add discount logic integration.
- * - Implement error handling for Stripe failures with retries.
- * - Add rate limiting for order creation endpoint.
  */

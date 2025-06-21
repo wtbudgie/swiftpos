@@ -1,3 +1,11 @@
+/**
+ * File: PastOrdersListPage.tsx
+ * Description: Displays completed orders for a restaurant in SwiftPOS.
+ * Provides view-only access to past order details with expandable item information.
+ * Author: William Anderson
+ * Created: 2025-06-21
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,22 +13,69 @@ import { ActiveOrder, OrderStatus } from "@/types/OrderType";
 import { SanitizedRestaurant } from "@/app/restaurant/[restaurantId]/admin/page";
 import { useActiveOrders } from "@/components/SocketComponent";
 
+/**
+ * Type: PastOrdersListPageProps
+ *
+ * Component props:
+ * - restaurantData: SanitizedRestaurant — Contains restaurant information including ID
+ */
 type PastOrdersListPageProps = {
 	restaurantData: SanitizedRestaurant;
 };
 
+/**
+ * Component: PastOrdersListPage
+ *
+ * Input:
+ * - Props as defined in PastOrdersListPageProps
+ *
+ * Output:
+ * - React component rendering completed orders list
+ *
+ * Description:
+ * Displays historical completed orders with:
+ * - Order summary information
+ * - Expandable item details
+ * - Responsive grid layout
+ * - Dark mode support
+ */
 export default function PastOrdersListPage({ restaurantData }: PastOrdersListPageProps) {
 	const restaurantId = restaurantData._id;
+
+	// WebSocket connection for real-time order updates
 	const [orders, setOrder] = useActiveOrders(() => `ws://${window.location.host}/api/restaurant/${restaurantId}/orders`);
+
+	// UI state for expanded order details
 	const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
+	// Flatten all orders from different restaurants
 	const allActiveOrders = orders.flatMap((o) => o.orders);
+
+	// Filter completed orders
 	const [completedOrders, setCompletedOrders] = useState<ActiveOrder[]>(allActiveOrders.filter((order) => order.status === OrderStatus.Completed));
 
+	/**
+	 * Handler: handleToggleExpand
+	 * Input:
+	 * - orderId: string — The ID of the order to expand/collapse
+	 *
+	 * Description:
+	 * Toggles the expanded state of an order card
+	 */
 	const handleToggleExpand = (orderId: string) => {
 		setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
 	};
 
+	/**
+	 * Function: updateOrderStatus
+	 * Input:
+	 * - order: ActiveOrder — The order to update
+	 * - orderStatus: OrderStatus — New status for the order
+	 *
+	 * Description:
+	 * Updates an order's status and syncs with WebSocket server
+	 * Note: Included for consistency but not used for completed orders
+	 */
 	const updateOrderStatus = (order: ActiveOrder, orderStatus: OrderStatus) => {
 		const updatedOrder: ActiveOrder = { ...order, status: orderStatus };
 		setOrder((prevOrders) => {
@@ -34,10 +89,26 @@ export default function PastOrdersListPage({ restaurantData }: PastOrdersListPag
 		});
 	};
 
+	// Update completed orders when WebSocket data changes
 	useEffect(() => {
 		setCompletedOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Completed));
 	}, [orders]);
 
+	/**
+	 * Function: renderOrderCard
+	 * Input:
+	 * - order: ActiveOrder — The order to render
+	 *
+	 * Output:
+	 * - ReactNode — The rendered order card component
+	 *
+	 * Description:
+	 * Renders an individual completed order card with:
+	 * - Basic order information
+	 * - Expandable item details
+	 * - Modification and note display
+	 * - Total price calculation
+	 */
 	const renderOrderCard = (order: ActiveOrder) => {
 		const isExpanded = expandedOrderId === order.id;
 
@@ -50,20 +121,6 @@ export default function PastOrdersListPage({ restaurantData }: PastOrdersListPag
 						<div className="font-bold text-xl text-gray-800 dark:text-white">Order #{order.id.slice(0, 8)}</div>
 						<div className="text-gray-500 dark:text-gray-400 text-sm">Placed: {new Date(order.orderPlacedAt).toLocaleTimeString()}</div>
 					</div>
-					{order.status === OrderStatus.Pending && (
-						<button
-							className="px-4 py-2 bg-yellow-400 text-black rounded hover:opacity-80 transition"
-							onClick={() => updateOrderStatus(order, OrderStatus.Preparing)}>
-							Mark Preparing
-						</button>
-					)}
-					{order.status === OrderStatus.Preparing && (
-						<button
-							className="px-4 py-2 bg-green-500 text-white rounded hover:opacity-80 transition"
-							onClick={() => updateOrderStatus(order, OrderStatus.Ready)}>
-							Mark Ready
-						</button>
-					)}
 				</div>
 
 				<div className="text-md text-gray-800 dark:text-gray-200">
@@ -96,16 +153,29 @@ export default function PastOrdersListPage({ restaurantData }: PastOrdersListPag
 
 	return (
 		<div className="w-full space-y-12">
+			{/* Completed Orders Section */}
 			{completedOrders.length > 0 && (
 				<section>
-					<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">🕐 Completed Orders</h2>
+					<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">✅ Completed Orders</h2>
 					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{completedOrders.map(renderOrderCard)}</div>
 				</section>
 			)}
 
-			{completedOrders.length === 0 && completedOrders.length === 0 && (
-				<div className="text-center text-gray-500 dark:text-gray-400 text-lg mt-10">No active orders right now.</div>
-			)}
+			{/* Empty State */}
+			{completedOrders.length === 0 && <div className="text-center text-gray-500 dark:text-gray-400 text-lg mt-10">No completed orders found.</div>}
 		</div>
 	);
 }
+
+/**
+ * Testing Notes:
+ * - Verify display of completed orders
+ * - Test order card expansion/collapse functionality
+ * - Check responsive grid layout at different screen sizes
+ * - Verify dark mode support
+ * - Test with multiple completed orders
+ * - Check timestamp formatting
+ * - Verify item and modification display
+ * - Test empty state rendering
+ * - Verify total price calculation
+ */

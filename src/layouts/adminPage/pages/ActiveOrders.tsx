@@ -1,3 +1,10 @@
+/**
+ * File: ActiveOrdersListPage.tsx
+ * Description: Displays and manages active orders for a restaurant in SwiftPOS.
+ * Organizes orders by status (Pending, Preparing, Ready) and provides status update functionality.
+ * Author: William Anderson
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,25 +12,71 @@ import { ActiveOrder, OrderStatus } from "@/types/OrderType";
 import { SanitizedRestaurant } from "@/app/restaurant/[restaurantId]/admin/page";
 import { Order, useActiveOrders } from "@/components/SocketComponent";
 
+/**
+ * Type: ActiveOrdersListPageProps
+ *
+ * Component props:
+ * - restaurantData: SanitizedRestaurant — Contains restaurant information including ID
+ */
 type ActiveOrdersListPageProps = {
 	restaurantData: SanitizedRestaurant;
 };
 
+/**
+ * Component: ActiveOrdersListPage
+ *
+ * Input:
+ * - Props as defined in ActiveOrdersListPageProps
+ *
+ * Output:
+ * - React component rendering order management interface
+ *
+ * Description:
+ * Manages and displays restaurant orders with:
+ * - Real-time WebSocket updates
+ * - Order status tracking (Pending → Preparing → Ready → Completed)
+ * - Expandable order details
+ * - Responsive grid layout
+ * - Dark mode support
+ */
 export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersListPageProps) {
 	const restaurantId = restaurantData._id;
+
+	// WebSocket connection for real-time order updates
 	const [orders, setOrder] = useActiveOrders(() => `ws://${window.location.host}/api/restaurant/${restaurantId}/orders`);
+
+	// UI state for expanded order details
 	const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
+	// Flatten all orders from different restaurants
 	const allActiveOrders = orders.flatMap((o) => o.orders);
 
+	// State for categorized orders
 	const [pendingOrders, setPendingOrders] = useState<ActiveOrder[]>(allActiveOrders.filter((order) => order.status === OrderStatus.Pending));
 	const [preparingOrders, setPreparingOrders] = useState<ActiveOrder[]>(allActiveOrders.filter((order) => order.status === OrderStatus.Preparing));
 	const [readyOrders, setReadyOrders] = useState<ActiveOrder[]>(allActiveOrders.filter((order) => order.status === OrderStatus.Ready));
 
+	/**
+	 * Handler: handleToggleExpand
+	 * Input:
+	 * - orderId: string — The ID of the order to expand/collapse
+	 *
+	 * Description:
+	 * Toggles the expanded state of an order card
+	 */
 	const handleToggleExpand = (orderId: string) => {
 		setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
 	};
 
+	/**
+	 * Function: updateOrderStatus
+	 * Input:
+	 * - order: ActiveOrder — The order to update
+	 * - orderStatus: OrderStatus — New status for the order
+	 *
+	 * Description:
+	 * Updates an order's status and syncs with WebSocket server
+	 */
 	const updateOrderStatus = (order: ActiveOrder, orderStatus: OrderStatus) => {
 		const updatedOrder: ActiveOrder = { ...order, status: orderStatus };
 		setOrder((prevOrders) => {
@@ -37,12 +90,27 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 		});
 	};
 
+	// Update categorized orders when WebSocket data changes
 	useEffect(() => {
 		setPendingOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Pending));
 		setPreparingOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Preparing));
 		setReadyOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Ready));
 	}, [orders]);
 
+	/**
+	 * Function: renderOrderCard
+	 * Input:
+	 * - order: ActiveOrder — The order to render
+	 *
+	 * Output:
+	 * - ReactNode — The rendered order card component
+	 *
+	 * Description:
+	 * Renders an individual order card with:
+	 * - Status-appropriate action buttons
+	 * - Expandable details
+	 * - Item and modification information
+	 */
 	const renderOrderCard = (order: ActiveOrder) => {
 		const isExpanded = expandedOrderId === order.id;
 
@@ -108,6 +176,7 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 
 	return (
 		<div className="w-full space-y-12">
+			{/* Pending Orders Section */}
 			{pendingOrders.length > 0 && (
 				<section>
 					<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">🕐 Pending Orders</h2>
@@ -115,22 +184,40 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 				</section>
 			)}
 
+			{/* Preparing Orders Section */}
 			{preparingOrders.length > 0 && (
 				<section>
 					<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">🍳 Preparing Orders</h2>
 					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{preparingOrders.map(renderOrderCard)}</div>
 				</section>
 			)}
+
+			{/* Ready Orders Section */}
 			{readyOrders.length > 0 && (
 				<section>
-					<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">🍳 Ready Orders</h2>
+					<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">✅ Ready Orders</h2>
 					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{readyOrders.map(renderOrderCard)}</div>
 				</section>
 			)}
 
-			{pendingOrders.length === 0 && preparingOrders.length === 0 && (
+			{/* Empty State */}
+			{pendingOrders.length === 0 && preparingOrders.length === 0 && readyOrders.length === 0 && (
 				<div className="text-center text-gray-500 dark:text-gray-400 text-lg mt-10">No active orders right now.</div>
 			)}
 		</div>
 	);
 }
+
+/**
+ * Testing Notes:
+ * - Verify WebSocket connection and real-time updates
+ * - Test order status transitions (Pending → Preparing → Ready → Completed)
+ * - Check order card expansion/collapse functionality
+ * - Verify responsive grid layout at different screen sizes
+ * - Test dark mode support
+ * - Verify empty state rendering
+ * - Check order item and modification display
+ * - Test with multiple simultaneous orders
+ * - Verify total price calculation
+ * - Check timestamp formatting
+ */

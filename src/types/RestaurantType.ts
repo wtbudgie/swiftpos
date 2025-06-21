@@ -14,7 +14,7 @@ export type Restaurant = {
 	address?: string;
 	contactEmail?: string;
 	phoneNumber?: string;
-	imageUrl?: string;
+	imageUrl: string;
 };
 
 export type Category = {
