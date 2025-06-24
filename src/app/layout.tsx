@@ -42,7 +42,6 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={`antialiased`}>
-				<style>@import url("https://fonts.googleapis.com/css2?family=Zain:ital,wght@0,300;0,400;0,900;1,300;1,400&display=swap");</style>
 				<SessionProvider>{children}</SessionProvider>
 			</body>
 		</html>

@@ -28,20 +28,20 @@ export type Item = {
 	id: string;
 	categoryId: string;
 	name: string;
-	description?: string;
+	description: string;
 	price: number; // base price for the item
 	ingredients: Ingredient[];
 	stockAmount?: number | "infinite";
 	modifications?: ModificationGroup[];
 	dietaries: string[];
-	imageUrl?: string;
-	isActive: boolean;
+	imageUrl: string;
+	isOutOfStock: boolean;
 };
 
 export type Ingredient = {
 	id: string;
 	name: string;
-	quantity?: string; // e.g. "100g", "2 slices"
+	quantity: string; // e.g. "100g", "2 slices"
 };
 
 export type ModificationOption = {
@@ -54,6 +54,6 @@ export type ModificationGroup = {
 	id: string;
 	name: string;
 	options: ModificationOption[];
-	maxSelectable?: number; // max number of options user can pick
+	maxSelectable: number; // max number of options user can pick
 	required?: boolean;
 };

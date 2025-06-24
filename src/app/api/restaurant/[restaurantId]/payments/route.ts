@@ -11,8 +11,8 @@ import Stripe from "stripe";
 import client from "@/utils/db";
 import { ObjectId } from "mongodb";
 import { v4 } from "uuid";
-import { ActiveOrder, OrderStatus } from "@/types/OrderType";
-import { Restaurant } from "@/types/RestaurantType";
+import { ActiveOrder, OrderedItem, OrderStatus } from "@/types/OrderType";
+import { Item, Restaurant } from "@/types/RestaurantType";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 	apiVersion: "2025-05-28.basil",
@@ -45,8 +45,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ res
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
-	const body = await req.json();
+	const body: { cart: OrderedItem[] } = await req.json();
 	const { cart } = body;
+	console.log(cart);
 
 	if (!Array.isArray(cart)) {
 		// Cart must be an array
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ res
 
 	// Validate each cart item against restaurant menu
 	for (const item of cart) {
-		const restItem = restaurantItems.find((i: any) => i.id === item.itemId);
+		const restItem = restaurantItems.find((i: Item) => i.id === item.itemId);
 		if (!restItem) {
 			// Item not found in restaurant menu
 			return NextResponse.json({ error: `Item not found: ${item.itemId}` }, { status: 400 });
@@ -78,12 +79,54 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ res
 			// Price mismatch possible tampering
 			return NextResponse.json({ error: `Price mismatch for item: ${item.itemId}` }, { status: 400 });
 		}
+
+		// Validate modifications if they exist
+		if (item.modifications && item.modifications.length > 0) {
+			// Check if the item has modifications in the restaurant menu
+			if (!restItem.modifications || restItem.modifications.length === 0) {
+				return NextResponse.json({ error: `Item does not allow modifications: ${item.itemId}` }, { status: 400 });
+			}
+
+			// Validate each modification
+			for (const cartMod of item.modifications) {
+				let modFound = false;
+				let priceMatch = false;
+
+				// Check all modification groups in the restaurant item
+				for (const restModGroup of restItem.modifications) {
+					const matchingOption = restModGroup.options.find((opt) => opt.id === cartMod.id);
+					if (matchingOption) {
+						modFound = true;
+						if (matchingOption.priceModifier === cartMod.priceModifier) {
+							priceMatch = true;
+						}
+						break;
+					}
+				}
+
+				if (!modFound) {
+					return NextResponse.json({ error: `Modification not found: ${cartMod.id} for item: ${item.itemId}` }, { status: 400 });
+				}
+
+				if (!priceMatch) {
+					return NextResponse.json({ error: `Price mismatch for modification: ${cartMod.id} on item: ${item.itemId}` }, { status: 400 });
+				}
+			}
+
+			// Validate max selectable modifications if needed
+			// (This would depend on your business logic)
+		}
 	}
 
 	try {
 		// Calculate pricing totals; discount currently zero placeholder
 		const discountAmount = 0;
-		const actualPrice = cart.reduce((sum, item) => sum + item.basePrice * item.quantity, 0);
+		const actualPrice = cart.reduce((sum, item) => {
+			const modTotal = item.modifications?.reduce((modSum, mod) => modSum + mod.priceModifier, 0) || 0;
+			const itemTotal = (item.basePrice + modTotal) * item.quantity;
+			return sum + itemTotal;
+		}, 0);
+
 		const discountPrice = actualPrice - discountAmount;
 
 		// Build pending order object conforming to ActiveOrder type
@@ -115,16 +158,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ res
 					name: item.name,
 				};
 
-				// Include custom text if provided and non-empty
 				if (item.customText?.trim()) {
 					productData.description = item.customText.trim();
 				}
+
+				const modTotal = item.modifications?.reduce((modSum, mod) => modSum + mod.priceModifier, 0) || 0;
+				const unitAmount = Math.round((item.basePrice + modTotal) * 100); // Stripe expects amount in cents
 
 				return {
 					price_data: {
 						currency: "aud",
 						product_data: productData,
-						unit_amount: Math.round(item.basePrice * 100), // Stripe requires cents
+						unit_amount: unitAmount,
 					},
 					quantity: item.quantity,
 				};

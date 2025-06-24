@@ -7,10 +7,10 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActiveOrder, OrderStatus } from "@/types/OrderType";
 import { SanitizedRestaurant } from "@/app/restaurant/[restaurantId]/admin/page";
-import { Order, useActiveOrders } from "@/components/SocketComponent";
+import { useActiveOrders } from "@/components/SocketComponent";
 
 /**
  * Type: ActiveOrdersListPageProps
@@ -49,7 +49,7 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 	const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
 	// Flatten all orders from different restaurants
-	const allActiveOrders = orders.flatMap((o) => o.orders);
+	const allActiveOrders = useMemo(() => orders.flatMap((o) => o.orders), [orders]);
 
 	// State for categorized orders
 	const [pendingOrders, setPendingOrders] = useState<ActiveOrder[]>(allActiveOrders.filter((order) => order.status === OrderStatus.Pending));
@@ -92,6 +92,7 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 
 	// Update categorized orders when WebSocket data changes
 	useEffect(() => {
+		const allActiveOrders = orders.flatMap((o) => o.orders);
 		setPendingOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Pending));
 		setPreparingOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Preparing));
 		setReadyOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Ready));

@@ -9,6 +9,7 @@ import { NextRequest } from "next/server";
 import client from "@/utils/db";
 import { auth } from "@/utils/auth";
 import { Restaurant } from "@/types/RestaurantType";
+import { Session } from "next-auth";
 
 const DEFAULT_IMAGE = "https://www.svgrepo.com/show/508699/landscape-placeholder.svg";
 const ADMIN_EMAILS = ["maniakwill@gmail.com"];
@@ -22,7 +23,7 @@ const ADMIN_EMAILS = ["maniakwill@gmail.com"];
  * Description:
  * Checks if the authenticated user is an admin by comparing email against ADMIN_EMAILS.
  */
-function isUserAdmin(session: any): boolean {
+function isUserAdmin(session: Session): boolean {
 	return !!session?.user?.email && ADMIN_EMAILS.includes(session.user.email);
 }
 
@@ -123,7 +124,7 @@ function createDefaultRestaurant(ownerId: string, timestamp: number): Restaurant
 export async function GET(req: NextRequest): Promise<Response> {
 	const session = await auth();
 
-	if (!isUserAdmin(session)) {
+	if (!session || !isUserAdmin(session)) {
 		const message = !session?.user?.email ? "Unauthorized" : "Forbidden";
 		return new Response(JSON.stringify({ message }), { status: !session?.user?.email ? 401 : 403 });
 	}

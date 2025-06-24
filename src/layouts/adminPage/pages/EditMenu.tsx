@@ -80,7 +80,7 @@ export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
 			name: "New Item",
 			description: "",
 			price: 0,
-			isActive: true,
+			isOutOfStock: false,
 			categoryId,
 			dietaries: [],
 			ingredients: [],
@@ -249,7 +249,7 @@ export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
 		}, 500);
 
 		return () => clearTimeout(timer);
-	}, [items, categories, saveStatus, handleSaveRestaurant]);
+	}, [items, categories, saveStatus, handleSaveRestaurant, originalCategories, originalItems]);
 
 	// ---- Render ----
 	return (
@@ -290,7 +290,7 @@ export default function EditMenuPage({ restaurantData }: EditMenuPageProps) {
                 dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
 				{/* Category Sections */}
 				{categories.map((category) => {
-					const categoryItems = items.filter((item) => item.categoryId === category.id && item.isActive);
+					const categoryItems = items.filter((item) => item.categoryId === category.id);
 
 					return (
 						<div key={category.id} id={category.id} className="transition-opacity duration-500 ease-in opacity-0 animate-fadeIn">

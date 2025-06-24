@@ -11,7 +11,7 @@
 "use client";
 import { useState } from "react";
 import { User } from "next-auth";
-import { CircleUserRound, History, SlidersHorizontal } from "lucide-react";
+import { CircleUserRound, History } from "lucide-react";
 
 // Components
 import AccountSettingsModal from "@/components/modals/AccountSettingsModal";
@@ -19,9 +19,6 @@ import LoginModal from "@/components/modals/LoginModal";
 import OrderHistoryModal from "@/components/modals/OrderHistoryModal";
 import RegisterModal from "@/components/modals/RegisterModal";
 import SearchBar from "@/components/inputs/SearchBar";
-
-// Types
-import { OrderedItem } from "@/types/OrderType";
 
 /**
  * Type: HeaderSectionProps

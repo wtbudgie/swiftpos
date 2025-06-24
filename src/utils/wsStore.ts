@@ -5,8 +5,6 @@
  * WebSocket connection manager for SwiftPOS real-time updates.
  * Maintains active WebSocket connections per restaurant and provides
  * methods for connection management and message broadcasting.
- *
- * Author: William Anderson
  */
 
 import type WebSocket from "ws";
@@ -94,7 +92,7 @@ export function getClients(restaurantId: string): Set<WebSocket> {
  * - Handles JSON serialization automatically
  * - Logs broadcast metrics for monitoring
  */
-export function broadcastToRestaurant(restaurantId: string, message: any) {
+export function broadcastToRestaurant(restaurantId: string, message: unknown) {
 	const clients = restaurantClients.get(restaurantId);
 	if (!clients || clients.size === 0) {
 		console.log(`[Broadcast] Restaurant ${restaurantId} → 0 clients`);

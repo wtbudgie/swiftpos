@@ -9,9 +9,6 @@ import { writeFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
-// Type: Promise resolving to an object with restaurantId string
-type Params = Promise<{ restaurantId: string }>;
-
 /**
  * Function: POST
  * Input:
@@ -27,7 +24,7 @@ type Params = Promise<{ restaurantId: string }>;
  * saves the file buffer to the server's public images directory, and returns the URL for client use.
  * Handles errors for missing files and internal failures gracefully.
  */
-export async function POST(req: NextRequest, { params }: { params: Params }): Promise<NextResponse> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
 	try {
 		// Extract form data from the request
 		const formData = await req.formData();

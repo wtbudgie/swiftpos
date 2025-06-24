@@ -9,7 +9,6 @@
 "use client";
 
 import { SanitizedRestaurant } from "@/app/restaurant/[restaurantId]/admin/page";
-import { User } from "@/types/UserType";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -42,7 +41,6 @@ type EditStorePageProps = {
  */
 export default function EditStorePage({ restaurantData }: EditStorePageProps) {
 	const restaurantId = restaurantData._id;
-	const [showWarning, setShowWarning] = useState(false);
 
 	// Form state management
 	const [storeName, setStoreName] = useState(restaurantData.name);
@@ -53,6 +51,8 @@ export default function EditStorePage({ restaurantData }: EditStorePageProps) {
 	const [storeContactNumber, setStoreContactNumber] = useState(restaurantData.contactEmail);
 	const [storeDietaries, setStoreDietaries] = useState(restaurantData.dietaries);
 	const [newDietary, setNewDietary] = useState("");
+
+	const [saving, setSaving] = useState(false);
 
 	/**
 	 * Handler: handleSubmit
@@ -66,6 +66,7 @@ export default function EditStorePage({ restaurantData }: EditStorePageProps) {
 	 * 3. Handling success/error responses
 	 */
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		setSaving(true);
 		e.preventDefault();
 
 		try {
@@ -89,13 +90,25 @@ export default function EditStorePage({ restaurantData }: EditStorePageProps) {
 
 			if (!response.ok) {
 				console.error("Update failed:", data.message);
-				setShowWarning(true);
 				return;
 			}
+
+			console.log(saving);
 		} catch (error) {
 			console.error("Error updating user:", error);
-			setShowWarning(true);
 		}
+	};
+
+	const isUnchanged = () => {
+		return (
+			storeName === restaurantData.name &&
+			storeAddress === restaurantData.address &&
+			storeImage === restaurantData.imageUrl &&
+			storeDescription === restaurantData.description &&
+			storeContactEmail === restaurantData.contactEmail &&
+			storeContactNumber === restaurantData.phoneNumber && // fix below
+			JSON.stringify(storeDietaries) === JSON.stringify(restaurantData.dietaries)
+		);
 	};
 
 	return (
@@ -147,18 +160,34 @@ export default function EditStorePage({ restaurantData }: EditStorePageProps) {
 				</div>
 
 				<div className="flex-1">
-					<label htmlFor="restaurantId" className="block font-semibold text-left text-black">
-						Restaurant ID
+					<label htmlFor="restaurantAddress" className="block font-semibold text-left text-black">
+						Restaurant Address
 					</label>
-					<p className="text-xs text-gray-700 text-left mb-1">The restaurant's ID (support use only).</p>
+					<p className="text-xs text-gray-700 text-left mb-1">The display address for the restaurant.</p>
 					<input
-						id="restaurantId"
+						id="restaurantAddress"
 						type="text"
-						value={restaurantData._id}
-						disabled
-						className="w-full rounded border border-gray-300 px-3 py-2 bg-gray-100 cursor-not-allowed text-black"
+						maxLength={45}
+						value={storeAddress}
+						onChange={(e) => setStoreAddress(e.target.value)}
+						className="w-full rounded border border-gray-300 px-3 py-2 bg-gray-100 text-black"
 					/>
 				</div>
+			</div>
+
+			<div className="flex-1">
+				<label htmlFor="restaurantDescription" className="block font-semibold text-left text-black">
+					Restaurant Description
+				</label>
+				<p className="text-xs text-gray-700 text-left mb-1">A simple description for the store (max 100).</p>
+				<input
+					id="restaurantDescription"
+					type="text"
+					value={storeDescription}
+					onChange={(e) => setStoreDescription(e.target.value)}
+					className="w-full rounded border border-gray-300 px-3 py-2 bg-gray-100 text-black"
+					maxLength={100}
+				/>
 			</div>
 
 			{/* Contact Information Section */}
@@ -175,7 +204,7 @@ export default function EditStorePage({ restaurantData }: EditStorePageProps) {
 						onChange={(e) => setStoreContactEmail(e.target.value)}
 						className="w-full rounded border border-gray-300 px-3 py-2 bg-gray-100 text-black"
 						required
-						maxLength={30}
+						maxLength={50}
 					/>
 				</div>
 
@@ -191,7 +220,7 @@ export default function EditStorePage({ restaurantData }: EditStorePageProps) {
 						onChange={(e) => setStoreContactNumber(e.target.value)}
 						className="w-full rounded border border-gray-300 px-3 py-2 bg-gray-100 text-black"
 						required
-						maxLength={11}
+						maxLength={15}
 					/>
 				</div>
 			</div>
@@ -207,6 +236,7 @@ export default function EditStorePage({ restaurantData }: EditStorePageProps) {
 						className="flex-1 border rounded px-3 py-1"
 						value={newDietary}
 						onChange={(e) => setNewDietary(e.target.value)}
+						maxLength={20}
 					/>
 					<button
 						type="button"
@@ -236,8 +266,27 @@ export default function EditStorePage({ restaurantData }: EditStorePageProps) {
 				</div>
 			</div>
 
+			<div className="flex-1">
+				<label htmlFor="restaurantId" className="block font-semibold text-left text-black">
+					Restaurant ID
+				</label>
+				<p className="text-xs text-gray-700 text-left mb-1">The restaurant&apos;s ID (support use only).</p>
+				<input
+					id="restaurantId"
+					type="text"
+					value={restaurantData._id}
+					disabled
+					className="w-full rounded border border-gray-300 px-3 py-2 bg-gray-100 cursor-not-allowed text-black"
+				/>
+			</div>
+
 			{/* Submit Button */}
-			<button type="submit" className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition">
+			<button
+				type="submit"
+				className={`bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition ${
+					saving || isUnchanged() ? "cursor-not-allowed opacity-50 bg-gray-400 italic" : "cursor-pointer"
+				}`}
+				disabled={saving || isUnchanged()}>
 				Save Details
 			</button>
 
@@ -267,7 +316,7 @@ async function uploadImage(file: File, restaurantId: string): Promise<string> {
 	const formData = new FormData();
 	formData.append("file", file);
 
-	const res = await fetch(`/api/restaurant/${restaurantId}/upload`, {
+	const res = await fetch(`/api/restaurant/${restaurantId}/config/upload`, {
 		method: "POST",
 		body: formData,
 	});

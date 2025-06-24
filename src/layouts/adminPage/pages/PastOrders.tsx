@@ -43,7 +43,7 @@ export default function PastOrdersListPage({ restaurantData }: PastOrdersListPag
 	const restaurantId = restaurantData._id;
 
 	// WebSocket connection for real-time order updates
-	const [orders, setOrder] = useActiveOrders(() => `ws://${window.location.host}/api/restaurant/${restaurantId}/orders`);
+	const [orders] = useActiveOrders(() => `ws://${window.location.host}/api/restaurant/${restaurantId}/orders`);
 
 	// UI state for expanded order details
 	const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
@@ -66,33 +66,10 @@ export default function PastOrdersListPage({ restaurantData }: PastOrdersListPag
 		setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
 	};
 
-	/**
-	 * Function: updateOrderStatus
-	 * Input:
-	 * - order: ActiveOrder — The order to update
-	 * - orderStatus: OrderStatus — New status for the order
-	 *
-	 * Description:
-	 * Updates an order's status and syncs with WebSocket server
-	 * Note: Included for consistency but not used for completed orders
-	 */
-	const updateOrderStatus = (order: ActiveOrder, orderStatus: OrderStatus) => {
-		const updatedOrder: ActiveOrder = { ...order, status: orderStatus };
-		setOrder((prevOrders) => {
-			const restaurantOrders = prevOrders.find((o) => o.restaurantId === restaurantId)?.orders || [];
-			const mergedOrders = [...new Map([...restaurantOrders.filter((o) => o.id !== updatedOrder.id), updatedOrder].map((o) => [o.id, o])).values()];
-
-			return {
-				restaurantId,
-				orders: mergedOrders,
-			};
-		});
-	};
-
 	// Update completed orders when WebSocket data changes
 	useEffect(() => {
 		setCompletedOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Completed));
-	}, [orders]);
+	}, [orders, allActiveOrders]);
 
 	/**
 	 * Function: renderOrderCard

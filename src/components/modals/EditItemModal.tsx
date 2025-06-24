@@ -58,6 +58,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 	const timestamp = Date.now();
 	const [formState, setFormState] = useState<Item>(item);
 	const [imagePreview, setImagePreview] = useState<string | null>(item.imageUrl || null);
+	const [errors, setErrors] = useState<Record<string, string>>({});
 
 	// Reset form when item prop changes
 	useEffect(() => {
@@ -110,6 +111,10 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 	 * Triggers the onSave callback with current form state and closes the modal.
 	 */
 	const handleSave = () => {
+		if (!validateForm()) {
+			alert("Please fix the errors before saving.");
+			return;
+		}
 		onSave(formState);
 		onClose();
 	};
@@ -192,7 +197,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 			name: "",
 			options: [],
 			required: false,
-			maxSelectable: undefined,
+			maxSelectable: 5,
 		};
 		setFormState((prev) => ({
 			...prev,
@@ -291,6 +296,66 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 		setFormState((prev) => ({ ...prev, modifications: updatedGroups }));
 	};
 
+	/**
+	 * Function: validateForm
+	 * Input: none
+	 *
+	 * Description:
+	 * Validates all inputs in the form, providing an error if one exists.
+	 */
+	const validateForm = (): boolean => {
+		const newErrors: Record<string, string> = {};
+
+		// Validate item name (required, non-empty)
+		if (!formState.name.trim()) {
+			newErrors.name = "Name is required";
+		}
+
+		if (!formState.description.trim()) {
+			newErrors.description = "Description is required";
+		}
+
+		// Validate price (required, numeric, >=0)
+		if (formState.price === undefined || formState.price === null || isNaN(formState.price)) {
+			newErrors.price = "Price must be a valid number";
+		} else if (formState.price < 0) {
+			newErrors.price = "Price cannot be negative";
+		}
+
+		// Validate ingredients: each must have a non-empty name and quantity
+		formState.ingredients.forEach((ingredient, idx) => {
+			if (!ingredient.name.trim()) {
+				newErrors[`ingredient-name-${idx}`] = "Ingredient name required";
+			}
+			if (!ingredient.quantity.trim()) {
+				newErrors[`ingredient-quantity-${idx}`] = "Ingredient quantity required";
+			}
+		});
+
+		// Validate modification groups: name required, maxSelectable must be number or empty, options required
+		formState.modifications?.forEach((group, groupIdx) => {
+			if (!group.name.trim()) {
+				newErrors[`mod-group-name-${groupIdx}`] = "Modification group name required";
+			}
+			if (group.maxSelectable !== undefined && group.maxSelectable !== null) {
+				if (isNaN(group.maxSelectable) || group.maxSelectable < 0) {
+					newErrors[`mod-group-maxSelectable-${groupIdx}`] = "Max selectable must be a positive number";
+				}
+			}
+			group.options.forEach((option, optIdx) => {
+				if (!option.name.trim()) {
+					newErrors[`mod-option-name-${groupIdx}-${optIdx}`] = "Modification option name required";
+				}
+				if (isNaN(option.priceModifier)) {
+					newErrors[`mod-option-priceModifier-${groupIdx}-${optIdx}`] = "Price modifier must be a number";
+				}
+			});
+		});
+
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0;
+	};
+
 	// Reset form when item changes
 	useEffect(() => {
 		setFormState(item);
@@ -339,32 +404,40 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 
 				{/* Name Field */}
 				<div className="mb-4">
-					<label className="block text-sm font-medium mb-1">Name</label>
-					<input type="text" name="name" value={formState.name} onChange={handleChange} className="w-full border px-3 py-2 rounded" />
+					<label className="block text-sm font-medium mb-1">Name (max 50 chars)</label>
+					<input type="text" name="name" value={formState.name} onChange={handleChange} className="w-full border px-3 py-2 rounded" maxLength={50} />
+					{errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
 				</div>
 
 				{/* Description Field */}
 				<div className="mb-4">
-					<label className="block text-sm font-medium mb-1">Description</label>
+					<label className="block text-sm font-medium mb-1">Description (max 250 chars)</label>
 					<textarea
 						name="description"
 						value={formState.description || ""}
 						onChange={handleChange}
 						className="w-full border px-3 py-2 rounded"
 						rows={3}
+						maxLength={250}
 					/>
+					{errors.description && <p className="text-red-600 text-sm mb-1">{errors.description}</p>}
 				</div>
 
 				{/* Price Field */}
-				<input
-					type="number"
-					name="price"
-					value={formState.price === 0 ? "0" : formState.price || ""}
-					onChange={handleChange}
-					className="w-full border px-3 py-2 rounded"
-					step="0.01"
-					min="0"
-				/>
+				<div>
+					<label className="block font-medium mb-1">Price ($)</label>
+					<input
+						type="number"
+						name="price"
+						min={0}
+						max={15000}
+						step={0.01}
+						value={formState.price}
+						onChange={handleChange}
+						className="w-full border px-3 py-2 rounded"
+					/>
+					{errors.price && <p className="text-red-600 text-sm mb-1">{errors.price}</p>}
+				</div>
 
 				{/* Dietary Options Section */}
 				<div className="mb-4">
@@ -388,7 +461,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 				{/* Ingredients Management Section */}
 				<div className="mb-6">
 					<div className="flex justify-between items-center mb-2">
-						<label className="block text-sm font-medium">Ingredients</label>
+						<label className="block text-sm font-medium">Ingredients (max 30 chars - max 20 chars)</label>
 						<button type="button" onClick={addIngredient} className="text-blue-600 text-sm">
 							+ Add Ingredient
 						</button>
@@ -397,17 +470,20 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 						<div key={ingredient.id} className="flex gap-2 mb-2">
 							<input
 								type="text"
-								placeholder="Name"
+								placeholder="Ingredient Name"
 								value={ingredient.name}
 								onChange={(e) => updateIngredient(idx, "name", e.target.value)}
-								className="flex-1 border px-2 py-1 rounded"
+								className={`border rounded px-3 py-2 flex-1 ${errors[`ingredient-name-${idx}`] ? "border-red-600 border-8" : ""}`}
+								maxLength={30}
 							/>
 							<input
 								type="text"
 								placeholder="Quantity"
-								value={ingredient.quantity || ""}
+								value={ingredient.quantity}
 								onChange={(e) => updateIngredient(idx, "quantity", e.target.value)}
-								className="w-32 border px-2 py-1 rounded"
+								className={`border rounded px-3 py-2 flex-1 ${errors[`ingredient-quantity-${idx}`] ? "border-red-600 border-8" : ""}`}
+								min={0}
+								max={150}
 							/>
 							<button onClick={() => removeIngredient(idx)} className="text-red-600 text-xl font-bold">
 								×
@@ -419,7 +495,7 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 				{/* Modifications Management Section */}
 				<div className="mb-6">
 					<div className="flex justify-between items-center mb-2">
-						<label className="block text-sm font-medium">Modifications</label>
+						<label className="block text-sm font-medium">Modifications (max 30 chars)</label>
 						<button type="button" onClick={addModificationGroup} className="text-blue-600 text-sm">
 							+ Add Group
 						</button>
@@ -432,14 +508,15 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 									placeholder="Group Name"
 									value={group.name}
 									onChange={(e) => updateModificationGroup(groupIdx, "name", e.target.value)}
-									className="flex-1 border px-2 py-1 rounded"
+									className={`flex-1 border px-2 py-1 rounded ${errors[`mod-group-name-${groupIdx}`] ? "border-red-600" : ""}`}
+									maxLength={30}
 								/>
 								<input
 									type="number"
 									placeholder="Max Select"
 									value={group.maxSelectable ?? ""}
 									onChange={(e) => updateModificationGroup(groupIdx, "maxSelectable", parseInt(e.target.value))}
-									className="w-28 border px-2 py-1 rounded"
+									className={`w-28 border px-2 py-1 rounded ${errors[`mod-group-maxSelectable-${groupIdx}`] ? "border-red-600" : ""}`}
 								/>
 								<label className="flex items-center gap-1 text-sm">
 									<input
@@ -463,14 +540,21 @@ export default function EditItemModal({ isOpen, onClose, item, onSave, onDelete,
 											placeholder="Option Name"
 											value={option.name}
 											onChange={(e) => updateModificationOption(groupIdx, optIdx, "name", e.target.value)}
-											className="flex-1 border px-2 py-1 rounded"
+											className={`flex-1 border px-2 py-1 rounded ${
+												errors[`mod-option-name-${groupIdx}-${optIdx}`] ? "border-red-600" : ""
+											}`}
+											maxLength={30}
 										/>
 										<input
 											type="number"
 											placeholder="+/- Price"
 											value={isNaN(option.priceModifier) ? "" : option.priceModifier}
 											onChange={(e) => updateModificationOption(groupIdx, optIdx, "priceModifier", parseFloat(e.target.value))}
-											className="w-28 border px-2 py-1 rounded"
+											className={`w-28 border px-2 py-1 rounded ${
+												errors[`mod-option-price-${groupIdx}-${optIdx}`] ? "border-red-600" : ""
+											}`}
+											min={-5}
+											max={150}
 										/>
 
 										<button onClick={() => removeModificationOption(groupIdx, optIdx)} className="text-red-600 text-xl font-bold">

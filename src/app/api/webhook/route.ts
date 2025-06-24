@@ -12,7 +12,6 @@ import { headers } from "next/headers";
 import client from "@/utils/db";
 import { ObjectId } from "mongodb";
 import { broadcastToRestaurant } from "@/utils/wsStore";
-import { v4 } from "uuid";
 import { Restaurant } from "@/types/RestaurantType";
 import { ActiveOrder, OrderStatus, UserOrderReceipt } from "@/types/OrderType";
 import { User } from "@/types/UserType";
@@ -103,6 +102,8 @@ export async function POST(request: NextRequest) {
 
 		// Create new ActiveOrder object by copying pending order data and attaching payment intent ID
 		const { _id, ...pendingOrderData } = pendingOrderDb;
+		void _id;
+
 		const newOrder: ActiveOrder = {
 			...pendingOrderData,
 			paymentIntentId: session.payment_intent?.toString() ?? "",

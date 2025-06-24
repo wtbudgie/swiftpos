@@ -54,9 +54,6 @@ export default function CheckoutModal({ isOpen, onClose, restaurantId, cartItems
 	const [clientSecret, setClientSecret] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
-	// Calculate total cart price in cents by summing totalPrice of each cart item.
-	const totalPriceCents = cartItems.reduce((acc, i) => acc + i.totalPrice, 0);
-
 	/**
 	 * Function: fetchClientSecret
 	 * Input: none (uses closure variables restaurantId and cartItems)
@@ -78,6 +75,7 @@ export default function CheckoutModal({ isOpen, onClose, restaurantId, cartItems
 			const data = await res.json();
 			setClientSecret(data.client_secret);
 		} catch (err) {
+			console.error(err);
 			setError("Failed to initiate payment.");
 		}
 	}, [restaurantId, cartItems]);
@@ -90,15 +88,7 @@ export default function CheckoutModal({ isOpen, onClose, restaurantId, cartItems
 		if (isOpen && cartItems.length > 0) {
 			fetchClientSecret();
 		}
-	}, [isOpen, fetchClientSecret]);
-
-	/**
-	 * Function: handlePaymentSuccess
-	 * Description: Marks payment as confirmed, triggering confirmation UI.
-	 */
-	const handlePaymentSuccess = () => {
-		setConfirmed(true);
-	};
+	}, [isOpen, fetchClientSecret, cartItems.length]);
 
 	/**
 	 * Function: handleClose

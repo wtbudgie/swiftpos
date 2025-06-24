@@ -419,6 +419,7 @@ export default function RestaurantLayout({ restaurantData, session }: Restaurant
 								className="bg-(--color-ice-blue) text-black px-6 py-3 rounded-4xl font-semibold hover:bg-(--color-steel-blue) hover:text-(--color-white) transition w-full disabled:opacity-50 disabled:cursor-not-allowed"
 								onClick={() => {
 									if (cartItems.length === 0) return;
+
 									setIsCheckingOut(true);
 									setIsCheckoutOpen(true);
 								}}
@@ -443,7 +444,7 @@ export default function RestaurantLayout({ restaurantData, session }: Restaurant
 					<div ref={scrollContainerRef} className="overflow-y-auto max-h-[calc(100vh-220px)] space-y-8 px-2 custom-scrollbar">
 						{restaurantData.categories.map((category) => {
 							const items = restaurantData.items.filter(
-								(item) => item.categoryId === category.id && item.isActive && item.name.toLowerCase().includes(lowerSearch)
+								(item) => item.categoryId === category.id && item.name.toLowerCase().includes(lowerSearch)
 							);
 
 							if (items.length === 0) return null;

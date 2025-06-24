@@ -51,7 +51,6 @@ export default function CategoryButton({ displayName, onClick, highlighted }: Ca
 
 	useEffect(() => {
 		setActive(highlighted);
-		console.log(highlighted, displayName);
 	}, [highlighted]);
 
 	return (
