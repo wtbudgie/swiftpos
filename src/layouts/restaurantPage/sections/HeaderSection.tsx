@@ -70,7 +70,7 @@ export default function HeaderSection({ user, registerOpen, searchQuery, setSear
 			{user && <RegisterModal isOpen={isRegisterOpen} onClose={() => setRegisterOpen(false)} userData={user} />}
 
 			{/* Login Modal */}
-			<LoginModal isOpen={isLoginOpen} onClose={() => setLoginOpen(false)} allowLoginBypass={true} />
+			<LoginModal isOpen={isLoginOpen} onClose={() => setLoginOpen(false)} allowLoginBypass={false} />
 
 			{/* Account Settings Modal */}
 			{user && <AccountSettingsModal isOpen={isSettingsOpen} onClose={() => setSettingsOpen(false)} userData={user} />}

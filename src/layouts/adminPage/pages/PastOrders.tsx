@@ -9,7 +9,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ActiveOrder, OrderStatus } from "@/types/OrderType";
+import { ActiveOrder, EnrichedOrder, OrderStatus } from "@/types/OrderType";
 import { SanitizedRestaurant } from "@/app/restaurant/[restaurantId]/admin/page";
 import { useActiveOrders } from "@/components/SocketComponent";
 
@@ -52,7 +52,8 @@ export default function PastOrdersListPage({ restaurantData }: PastOrdersListPag
 	const allActiveOrders = orders.flatMap((o) => o.orders);
 
 	// Filter completed orders
-	const [completedOrders, setCompletedOrders] = useState<ActiveOrder[]>(allActiveOrders.filter((order) => order.status === OrderStatus.Completed));
+	const [completedOrders, setCompletedOrders] = useState<EnrichedOrder[]>(allActiveOrders.filter((order) => order.status === OrderStatus.Completed));
+	console.log(completedOrders);
 
 	/**
 	 * Handler: handleToggleExpand
@@ -68,8 +69,9 @@ export default function PastOrdersListPage({ restaurantData }: PastOrdersListPag
 
 	// Update completed orders when WebSocket data changes
 	useEffect(() => {
-		setCompletedOrders(allActiveOrders.filter((order) => order.status === OrderStatus.Completed));
-	}, [orders, allActiveOrders]);
+		const completed = orders.flatMap((o) => o.orders.filter((order) => order.status === OrderStatus.Completed));
+		setCompletedOrders(completed);
+	}, [orders]);
 
 	/**
 	 * Function: renderOrderCard
@@ -86,8 +88,10 @@ export default function PastOrdersListPage({ restaurantData }: PastOrdersListPag
 	 * - Modification and note display
 	 * - Total price calculation
 	 */
-	const renderOrderCard = (order: ActiveOrder) => {
+	const renderOrderCard = (order: EnrichedOrder) => {
 		const isExpanded = expandedOrderId === order.id;
+
+		console.log(order);
 
 		return (
 			<div
@@ -97,6 +101,18 @@ export default function PastOrdersListPage({ restaurantData }: PastOrdersListPag
 					<div>
 						<div className="font-bold text-xl text-gray-800 dark:text-white">Order #{order.id.slice(0, 8)}</div>
 						<div className="text-gray-500 dark:text-gray-400 text-sm">Placed: {new Date(order.orderPlacedAt).toLocaleTimeString()}</div>
+					</div>
+				</div>
+
+				<div className="flex flex-col text-white space-y-1 text-sm">
+					<div className="font-semibold">
+						Customer Name: {order.customerFirstName} {order.customerSecondName}
+					</div>
+					<div className="flex items-center space-x-2">
+						Customer Email: <span>{order.customerEmail}</span>
+					</div>
+					<div className="flex items-center space-x-2">
+						Customer Phone Number: <span>{order.customerPhone}</span>
 					</div>
 				</div>
 
@@ -121,7 +137,7 @@ export default function PastOrdersListPage({ restaurantData }: PastOrdersListPag
 								{item.customText && <div className="ml-4 text-sm italic text-gray-500 dark:text-gray-400">Note: {item.customText}</div>}
 							</div>
 						))}
-						<div className="text-right font-semibold mt-2">Total: ${order.discountPrice.toFixed(2)}</div>
+						<div className="text-right text-white font-semibold mt-2">Total: ${order.discountPrice.toFixed(2)}</div>
 					</div>
 				)}
 			</div>
@@ -133,7 +149,7 @@ export default function PastOrdersListPage({ restaurantData }: PastOrdersListPag
 			{/* Completed Orders Section */}
 			{completedOrders.length > 0 && (
 				<section>
-					<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">✅ Completed Orders</h2>
+					<h2 className="text-2xl font-bold text-black mb-4">✅ Completed Orders</h2>
 					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{completedOrders.map(renderOrderCard)}</div>
 				</section>
 			)}

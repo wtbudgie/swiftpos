@@ -8,7 +8,7 @@ import { Restaurant } from "@/types/RestaurantType";
 import dbClient from "@/utils/db";
 import { ObjectId } from "mongodb";
 import { addClient, removeClient, getClients } from "@/utils/wsStore";
-import { ActiveOrder } from "@/types/OrderType";
+import { ActiveOrder, EnrichedOrder } from "@/types/OrderType";
 import { User } from "@/types/UserType";
 import { sendEmail } from "@/utils/sendEmail";
 
@@ -41,13 +41,41 @@ export async function SOCKET(
 	addClient(restaurantId, client);
 
 	const db = dbClient.db("SwiftPOS");
-	const restaurant = await db.collection<Restaurant>("restaurants").findOne({ _id: new ObjectId(restaurantId) });
+	const restaurantCollection = db.collection<Restaurant>("restaurants");
+	const restaurant = await restaurantCollection.findOne({ _id: new ObjectId(restaurantId) });
+	const userCollection = db.collection<User>("users");
+
+	// Helper type guard function to filter nulls
+	function isEnrichedOrder(order: EnrichedOrder | null): order is EnrichedOrder {
+		return order !== null;
+	}
+
+	// Generate array with possible nulls
+	const ordersWithNulls: (EnrichedOrder | null)[] = await Promise.all(
+		restaurant?.activeOrders.map(async (order: ActiveOrder) => {
+			if (!order.customerId) return null;
+
+			const updatedUser = await userCollection.findOne({ _id: new ObjectId(order.customerId) });
+			if (!updatedUser) return null;
+
+			return {
+				...order,
+				customerFirstName: updatedUser.firstName,
+				customerSecondName: updatedUser.secondName,
+				customerEmail: updatedUser.email,
+				customerPhone: updatedUser.phoneNumber,
+			};
+		}) ?? []
+	);
+
+	// Filter out nulls to get pure EnrichedOrder[]
+	const orders: EnrichedOrder[] = ordersWithNulls.filter(isEnrichedOrder);
 
 	// Send initial order data to newly connected client
 	client.send(
 		JSON.stringify({
 			restaurantId,
-			orders: restaurant?.activeOrders || [],
+			orders: orders,
 		})
 	);
 
@@ -73,10 +101,6 @@ export async function SOCKET(
 			const message = JSON.parse(data.toString()) as RecievingMessage;
 			const { restaurantId, orders: updatedOrders } = message;
 
-			const db = dbClient.db("SwiftPOS");
-			const restaurantCollection = db.collection<Restaurant>("restaurants");
-			const userCollection = db.collection<User>("users");
-
 			const restaurant = await restaurantCollection.findOne({ _id: new ObjectId(restaurantId) });
 			if (!restaurant) {
 				console.error(`Restaurant ${restaurantId} not found`);
@@ -84,6 +108,7 @@ export async function SOCKET(
 			}
 
 			const currentOrders = restaurant.activeOrders || [];
+			const enrichedOrders: EnrichedOrder[] = [];
 
 			// Identify only changed orders to avoid redundant writes/emails
 			const changedOrders = updatedOrders.filter((updatedOrder) => {
@@ -94,7 +119,6 @@ export async function SOCKET(
 			// Process each changed order
 			for (const order of changedOrders) {
 				if (!order.customerId) continue;
-
 				const customerId = new ObjectId(order.customerId);
 
 				// Update the order status in the user's record
@@ -119,6 +143,15 @@ export async function SOCKET(
 					console.warn(`⚠️ No email found for user ${order.customerId}`);
 					continue;
 				}
+
+				const enrichedOrder: EnrichedOrder = {
+					...order,
+					customerFirstName: updatedUser.firstName,
+					customerSecondName: updatedUser.secondName,
+					customerEmail: updatedUser.email,
+					customerPhone: updatedUser.phoneNumber,
+				};
+				enrichedOrders.push(enrichedOrder);
 
 				// Build order update email content
 				const subject = `Your Order at ${restaurant.name} Has Been Updated`;
@@ -189,9 +222,10 @@ export async function SOCKET(
 			}
 
 			// Merge updated orders with unchanged ones for DB storage
-			const mergedOrders = [
-				...new Map([...currentOrders.filter((o) => !updatedOrders.some((u) => u.id === o.id)), ...updatedOrders].map((o) => [o.id, o])).values(),
+			const mergedOrders: EnrichedOrder[] = [
+				...new Map([...currentOrders.filter((o) => !enrichedOrders.some((u) => u.id === o.id)), ...enrichedOrders].map((o) => [o.id, o])).values(),
 			];
+			console.log(mergedOrders);
 
 			await restaurantCollection.updateOne({ _id: new ObjectId(restaurantId) }, { $set: { activeOrders: mergedOrders } });
 
@@ -199,6 +233,7 @@ export async function SOCKET(
 			const broadcastMessage = JSON.stringify({ restaurantId, orders: mergedOrders });
 			for (const client of getClients(restaurantId)) {
 				if (client.readyState === client.OPEN) {
+					console.log(broadcastMessage);
 					client.send(broadcastMessage);
 				}
 			}

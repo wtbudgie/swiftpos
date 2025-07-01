@@ -20,6 +20,13 @@ export type ActiveOrder = {
 	paymentIntentId: string;
 };
 
+export type EnrichedOrder = ActiveOrder & {
+	customerFirstName?: string | null;
+	customerSecondName?: string | null;
+	customerEmail?: string;
+	customerPhone?: string;
+};
+
 export type OrderedItem = {
 	itemId: string;
 	name: string;

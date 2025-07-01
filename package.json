@@ -10,7 +10,7 @@
 		"lint:fix": "next lint --fix",
 		"type-check": "tsc --noEmit",
 		"prepare": "next-ws patch",
-		"stripe": "stripe listen --forward-to localhost:3000/api/webhook",
+		"stripe": "stripe listen --forward-to http://localhost:3000/api/webhook",
 		"fixDNS": "sudo bash ./fixDNS.bash"
 	},
 	"dependencies": {

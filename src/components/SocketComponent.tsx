@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useRef, useEffect, useState } from "react";
-import { ActiveOrder } from "@/types/OrderType";
+import { EnrichedOrder } from "@/types/OrderType";
 
 /**
  * Interface: Order
@@ -17,7 +17,7 @@ import { ActiveOrder } from "@/types/OrderType";
  */
 export interface Order {
 	restaurantId: string;
-	orders: ActiveOrder[];
+	orders: EnrichedOrder[];
 }
 
 /**

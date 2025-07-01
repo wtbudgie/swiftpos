@@ -612,7 +612,7 @@ async function uploadImage(file: File, restaurantId: string): Promise<string> {
 	const formData = new FormData();
 	formData.append("file", file);
 
-	const res = await fetch(`/api/restaurant/${restaurantId}/upload`, {
+	const res = await fetch(`/api/restaurant/${restaurantId}/config/upload`, {
 		method: "POST",
 		body: formData,
 	});

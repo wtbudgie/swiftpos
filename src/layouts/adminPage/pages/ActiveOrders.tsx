@@ -8,7 +8,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ActiveOrder, OrderStatus } from "@/types/OrderType";
+import { ActiveOrder, EnrichedOrder, OrderStatus } from "@/types/OrderType";
 import { SanitizedRestaurant } from "@/app/restaurant/[restaurantId]/admin/page";
 import { useActiveOrders } from "@/components/SocketComponent";
 
@@ -112,7 +112,7 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 	 * - Expandable details
 	 * - Item and modification information
 	 */
-	const renderOrderCard = (order: ActiveOrder) => {
+	const renderOrderCard = (order: EnrichedOrder) => {
 		const isExpanded = expandedOrderId === order.id;
 
 		return (
@@ -124,6 +124,7 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 						<div className="font-bold text-xl text-gray-800 dark:text-white">Order #{order.id.slice(0, 8)}</div>
 						<div className="text-gray-500 dark:text-gray-400 text-sm">Placed: {new Date(order.orderPlacedAt).toLocaleTimeString()}</div>
 					</div>
+
 					{order.status === OrderStatus.Pending && (
 						<button
 							className="px-4 py-2 bg-yellow-400 text-black rounded hover:opacity-80 transition"
@@ -147,6 +148,18 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 					)}
 				</div>
 
+				<div className="flex flex-col text-white space-y-1 text-sm">
+					<div className="font-semibold">
+						Customer Name: {order.customerFirstName} {order.customerSecondName}
+					</div>
+					<div className="flex items-center space-x-2">
+						Customer Email: <span>{order.customerEmail}</span>
+					</div>
+					<div className="flex items-center space-x-2">
+						Customer Phone Number: <span>{order.customerPhone}</span>
+					</div>
+				</div>
+
 				<div className="text-md text-gray-800 dark:text-gray-200">
 					{order.items.length} item{order.items.length > 1 ? "s" : ""}
 				</div>
@@ -168,7 +181,7 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 								{item.customText && <div className="ml-4 text-sm italic text-gray-500 dark:text-gray-400">Note: {item.customText}</div>}
 							</div>
 						))}
-						<div className="text-right font-semibold mt-2">Total: ${order.discountPrice.toFixed(2)}</div>
+						<div className="text-right font-semibold mt-2 text-white">Total: ${order.discountPrice.toFixed(2)}</div>
 					</div>
 				)}
 			</div>
@@ -180,7 +193,7 @@ export default function ActiveOrdersListPage({ restaurantData }: ActiveOrdersLis
 			{/* Pending Orders Section */}
 			{pendingOrders.length > 0 && (
 				<section>
-					<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">🕐 Pending Orders</h2>
+					<h2 className="text-2xl font-bold text-black mb-4">🕐 Pending Orders</h2>
 					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{pendingOrders.map(renderOrderCard)}</div>
 				</section>
 			)}
